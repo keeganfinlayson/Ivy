@@ -5,7 +5,10 @@ export const INGREDIENTS=Object.freeze([
  {id:'banana',name:'Banana',emoji:'🍌'},
  {id:'flour',name:'Flour',emoji:'🌾'},
  {id:'sugar',name:'Sugar',emoji:'🍬'},
- {id:'milk',name:'Milk',emoji:'🥛'}
+ {id:'milk',name:'Milk',emoji:'🥛'},
+ {id:'mango',name:'Mango',emoji:'🥭'},
+ {id:'starfruit',name:'Star Fruit',emoji:'⭐'},
+ {id:'dragonfruit',name:'Dragon Fruit',emoji:'🐉'}
 ]);
 export const REWARDS=Object.freeze({1:1,2:5,3:10,4:15,5:20});
 const dishes=[
@@ -19,7 +22,13 @@ const dishes=[
  {id:'blueberry-muffin',name:'Blueberry Muffin',emoji:'🧁',method:'bake',needs:['blueberry','flour','milk'],quality:5,group:'baked'},
  {id:'banana-bread',name:'Banana Bread',emoji:'🍞',method:'bake',needs:['banana','flour','milk'],quality:5,group:'baked'},
  {id:'strawberry-cake',name:'Strawberry Cake',emoji:'🍰',method:'bake',needs:['flour','strawberry','sugar'],quality:5,group:'baked'},
- {id:'sugar-cookie',name:'Sugar Cookie',emoji:'🍪',method:'bake',needs:['flour','sugar'],quality:4,group:'baked'}
+ {id:'sugar-cookie',name:'Sugar Cookie',emoji:'🍪',method:'bake',needs:['flour','sugar'],quality:4,group:'baked'},
+ {id:'mango-smoothie',name:'Mango Smoothie',emoji:'🥤',method:'mix',needs:['mango','milk'],quality:5,group:'fruit'},
+ {id:'mango-cake',name:'Mango Cake',emoji:'🍰',method:'bake',needs:['mango','flour','sugar'],quality:5,group:'baked'},
+ {id:'starfruit-sparkle',name:'Starry Fruit Surprise',emoji:'🍨',method:'mix',needs:['starfruit','milk'],quality:5,group:'fruit'},
+ {id:'starry-tart',name:'Starry Tart',emoji:'🥧',method:'bake',needs:['starfruit','flour'],quality:5,group:'baked'},
+ {id:'dragonfruit-delight',name:'Dragonfruit Delight',emoji:'🍧',method:'mix',needs:['dragonfruit'],quality:5,group:'special'},
+ {id:'dragonfruit-cake',name:'Dragonfruit Magic Cake',emoji:'🎂',method:'bake',needs:['dragonfruit'],quality:5,group:'special'}
 ];
 export const RECIPE_CATALOG=Object.freeze(dishes.map(r=>Object.freeze({...r,needs:Object.freeze([...r.needs])})));
 function hashKey(value){let n=2166136261;for(let i=0;i<value.length;i++){n^=value.charCodeAt(i);n=Math.imul(n,16777619)}return n>>>0}
@@ -37,6 +46,7 @@ export function resolveFood(ingredients,method){
  return{id:'mystery-'+hash.toString(36),name:names[hash%names.length],emoji:method==='bake'?'🥧':'🍮',quality:1+hash%3,group:method==='bake'?'baked':'other'};
 }
 export function rateFood(food,preference){
+ if(food.group==='special')return 5;
  let n=food.quality;
  if(preference==='fruit'&&food.group==='fruit')n++;
  if(preference==='baked'&&food.group==='baked')n++;
