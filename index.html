@@ -101,6 +101,20 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
  .card{padding:13px}.ingredients{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.animal.walk svg,.animal.walk .legs,.animal.walk .arms,.animal.eat svg,.confetti span,.discovered,.reaction,.cafe-food,.oven{animation:none!important}}
+
+/* Phase 5: playful background surprises, without graphic effects. */
+.peek-kitty{position:absolute;z-index:3;left:1%;bottom:41%;width:54px;height:58px;font-size:39px;padding:0;border:0;background:transparent;box-shadow:none;animation:peek 2s ease-in-out infinite alternate;filter:drop-shadow(0 4px 3px #0002)}
+.peek-kitty:hover{background:transparent!important}
+@keyframes peek{0%{transform:translateX(-24px) rotate(-10deg)}100%{transform:translateX(0) rotate(8deg)}}
+.guest-1 svg{animation:breathing 2s ease-in-out infinite alternate}
+.guest-2 svg{animation:hop 2.6s ease-in-out infinite alternate}
+.bowl-pieces{display:flex;justify-content:center;align-items:center;gap:9px;min-height:39px;flex-wrap:wrap}
+.bowl-pieces span{font-size:26px;display:inline-block;animation:pop .25s both}
+.bowl.mixing .bowl-pieces span{animation:mixloop .6s ease-in-out infinite alternate}
+.bowl.mixing .bowl-pieces span:nth-child(even){animation-direction:alternate-reverse}
+@keyframes mixloop{to{transform:translateY(-8px) rotate(28deg)}}
+.low-motion .peek-kitty,.low-motion .guest-1 svg,.low-motion .guest-2 svg{animation:none!important}
+@media(prefers-reduced-motion:reduce){.peek-kitty,.guest-1 svg,.guest-2 svg,.bowl.mixing .bowl-pieces span{animation:none!important}}
 </style></head><body>
 <header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.14 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
 <main>
@@ -118,7 +132,7 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
 <div class="guestline" id="waiting">Waiting:</div>
 <div class="room" id="room" data-wallpaper="default">
  <div class="window" id="window"><div class="clouds"></div></div>
- <div class="door">ENTRY</div><div class="bench"></div><div class="pendant"></div><div class="shelf">🪴 🫙</div>
+ <div class="door">ENTRY</div><button type="button" id="peekKitty" class="peek-kitty hidden" aria-label="Peekaboo Kitty">🐱</button><div class="bench"></div><div class="pendant"></div><div class="shelf">🪴 🫙</div>
  <div class="counter">COUNTER</div>
  <div class="decor-layer" id="decorLayer"></div>
  <div class="guest-layer" id="guestLayer"></div>
@@ -150,7 +164,7 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
 <div class="kitchen-top"><h2>Kitchen</h2><p>Pick ingredients and see what happens. There is no recipe book — every surprise is a discovery!</p></div>
 <div id="ingredients" class="ingredients"></div>
 <div class="cook-table">
-<div class="bowl" id="bowl" aria-label="Mixing bowl"><span class="bowl-emoji">🥣</span><span id="selected" class="selected-text">Nothing in the bowl yet</span></div>
+<div class="bowl" id="bowl" aria-label="Mixing bowl"><span class="bowl-emoji">🥣</span><div id="bowlPieces" class="bowl-pieces" aria-hidden="true"></div><span id="selected" class="selected-text">Nothing in the bowl yet</span></div>
 <div class="actions" id="preparation"><button id="emptyBtn">Empty bowl</button><button id="mixBtn">Mix ingredients</button><button id="bakeBtn">Bake in oven</button><button id="returnBtn">Back to café</button></div>
 <div id="mixing" class="cook-step hidden"><p id="stirText">Keep stirring!</p><div class="actions"><button id="stirBtn">Stir the bowl!</button></div></div>
 <div id="baking" class="cook-step hidden"><span class="oven">🔥🧁</span><p id="ovenText">Your food is baking...</p><div class="progress-track"><div class="progress-fill" id="ovenGauge"></div></div><div class="actions"><button id="ovenBtn" disabled>Open oven</button></div></div>
