@@ -95,7 +95,10 @@ export function cafeBackdropSVG(){
  +'<linearGradient id="mm-sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#B5DDEB"/><stop offset="1" stop-color="#EDF7DC"/></linearGradient></defs>'
  +wall+rect(0,315,1660,185,0,'url(#mm-floor)')+floorLines
  +entrance+windowScene(210,45)+windowScene(904,43)
- +sofa(287,190)+menuBoard()+art+shelf+counterBack
+ +sofa(287,151)+ellipse(411,405,76,17,'#B77A78','opacity=".18"')
+ +rect(343,367,132,43,19,'#EBAAB9','stroke="#AD797D" stroke-width="4"')
+ +rect(350,358,118,24,12,'#F7CCD4','stroke="#BD8992" stroke-width="3"')
+ +menuBoard()+art+shelf+counterBack
  +hangingLamp(790,113,.8)+hangingLamp(1539,115,.8)
  +hangingPot(610,155)+hangingPot(1185,150)
  +pottedPlant(195,345,.65)+pottedPlant(875,299,.68)
