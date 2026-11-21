@@ -1,6 +1,6 @@
 /* Mochi Munch restaurant session engine v3: shops, celebrations and guest events. */
 import {SHOP_CATALOG,ACHIEVEMENTS,FURNITURE_COLORS,SPECIES,dateKey,eventSpecies,itemById} from './game-content.js';
-import {safeFurniturePosition} from './scene-layout.js';
+import {safeFurniturePosition,LINE_SPOTS} from './scene-layout.js';
 import {Game,Customer,STATES,LOCATIONS} from './game-core.js';
 import {INGREDIENTS,REWARDS,resolveFood,rateFood} from './recipes.js';
 export const SAVE_KEY='mochi-munch-game';
@@ -11,7 +11,7 @@ const validStates=new Set(Object.values(STATES));
 function clampInt(v,def=0){return Number.isSafeInteger(v)&&v>=0?v:def}
 export class Restaurant{
  constructor(saved=null,{random=Math.random}={}){
-   this.random=random;this.now=()=>new Date();this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;this.wallpaper='default';this.lastBonuses=[];
+   this.random=random;this.now=()=>new Date();this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;this.wallpaper='default';this.lastBonuses=[];this.cameFromLine=false;
    if(!saved||!this.restore(saved)){this.fillQueue();this.startNext()}
  }
  get customer(){return this.game.customers.get(this.currentId)||null}
@@ -29,10 +29,10 @@ export class Restaurant{
   if(this.currentId)throw Error('Finish the current visit first');
   this.fillQueue();
   const now=this.now(),today=dateKey(now),inspectorDue=now.getDay()===5&&this.game.daily.lastInspection!==today;
-  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id}
-  else this.currentId=this.queueIds.shift();
+  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id;this.cameFromLine=false}
+  else {this.cameFromLine=this.served>0;this.currentId=this.queueIds.shift()}
   this.fillQueue();
-  const c=this.customer;c.position={...LOCATIONS.entrance};c.state=STATES.ENTERING;
+  const c=this.customer;c.position={...(this.cameFromLine?LINE_SPOTS[0]:LOCATIONS.entrance)};c.state=STATES.ENTERING;
   this.phase='arriving';this.scene='cafe';this.cooking=null;this.prepared=null;this.selected=[];this.lastRating=null;this.lastReward=0;this.lastBonuses=[];this.pendingMove=null;return c;
  }
  planMove(destination,arrivalState){
@@ -116,7 +116,7 @@ export class Restaurant{
 
  serialize(){
   const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference,rarity:c.rarity}]));
-  return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,pendingMove:this.pendingMove?{...this.pendingMove}:null};
+  return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,cameFromLine:this.cameFromLine,pendingMove:this.pendingMove?{...this.pendingMove}:null};
  }
  restore(raw){try{
   if(!raw||![2,3,4].includes(raw.version)||!raw.game||!Array.isArray(raw.game.customers))return false;
@@ -140,14 +140,14 @@ export class Restaurant{
   this.cooking=raw.cooking&&['mix','bake'].includes(raw.cooking.method)?{...raw.cooking}:null;
   this.prepared=raw.prepared&&Number.isInteger(raw.prepared.stars)?raw.prepared:null;
   this.served=clampInt(raw.served);this.lastRating=raw.lastRating||null;this.lastReward=Number.isInteger(raw.lastReward)?raw.lastReward:0;this.lastBonuses=Array.isArray(raw.lastBonuses)?raw.lastBonuses:[];this.wallpaper=this.game.unlocked.wallpaper.includes(raw.wallpaper)?raw.wallpaper:'default';
-  this.pendingMove=raw.pendingMove||null;
+  this.pendingMove=raw.pendingMove||null;this.cameFromLine=raw.version>=4&&!!raw.cameFromLine;
   // Resume interrupted movement at its starting location or complete it safely.
   if(this.phase==='moving'){const p=this.pendingMove;if(p&&LOCATIONS[p.destination]&&validStates.has(p.arrivalState)){this.game.arrive(this.currentId,LOCATIONS[p.destination],p.arrivalState);this.phase=p.arrivalState===STATES.AT_COUNTER?'counter':'waiting'}else{this.customer.state=STATES.WAITING;this.phase='waiting'}this.pendingMove=null}
   if(this.phase==='leaving'){this.game.customers.delete(this.currentId);this.currentId=null;this.startNext()}
   if(this.phase==='finished')this.customer.state=STATES.EATING;
   if(this.phase==='prepared'&&!this.prepared){this.phase='counter';this.scene='kitchen'}
   if(this.phase==='counter'||this.phase==='prepared')this.customer.state=STATES.AT_COUNTER;
-  if(this.phase==='arriving'){this.customer.state=STATES.ENTERING;this.customer.position={...LOCATIONS.entrance}}
+  if(this.phase==='arriving'){this.customer.state=STATES.ENTERING;this.customer.position={...(this.cameFromLine?LINE_SPOTS[0]:LOCATIONS.entrance)}}
   // Old saved positions belong to the earlier single-screen room.
   // Reposition the same guest in the new wide room without resetting their progress.
   if(raw.version<4&&this.customer){
