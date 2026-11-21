@@ -12,6 +12,7 @@ const oval=(x,y,rx,ry,fill)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+r
 export function characterSVG(c,expression='idle'){
  const type=palette[c.species]?c.species:'capybara',cat=['cat','unicorn-cat','inspector-cat'].includes(type);
  const [fur,accent]=safeColor(type);
+ const shade={cat:'#f1e1d7',capybara:'#c18b64',dog:'#d5ad81',otter:'#986c53',giraffe:'#e3ad60','unicorn-cat':'#e9d6f0','inspector-cat':'#f1e1d7',turkey:'#a96d58',ghost:'#e4ebf7','santa-capybara':'#c18b64'}[type];
  const sleep=expression==='sleep',love=expression==='love',disgust=expression==='yuck',joy=expression==='happy';
  const eye=sleep?'<path d="M33 61 Q41 67 49 61 M71 61 Q79 67 87 61" fill="none" stroke="#594037" stroke-width="3" stroke-linecap="round"/>':love?'<path d="M34 63 Q39 52 45 62 Q51 52 54 63 L44 74 Z M69 63 Q74 52 80 62 Q86 52 89 63 L79 74 Z" fill="#e885a8" stroke="none"/>':oval(41,62,4,4,'#372b29')+oval(79,62,4,4,'#372b29');
  const mouth=disgust?'<path d="M51 90 Q60 78 69 90" fill="none" stroke="#68463d" stroke-width="3"/>':joy||love?'<path d="M49 82 Q60 99 71 82 Q60 90 49 82" fill="#9c5963" stroke="#704b43" stroke-width="2"/>':'<path d="M52 82 Q60 90 68 82" fill="none" stroke="#704b43" stroke-width="2"/>';
@@ -45,11 +46,11 @@ export function characterSVG(c,expression='idle'){
   faceExtra=oval(60,80,27,17,'#f6ddc4')+oval(60,74,6,4,'#65473d');
  }
  if(type==='santa-capybara')headExtra='<path d="M27 33 Q50 -9 86 3 L101 25 L89 32 Z" fill="#d85b68" stroke="#a63f54" stroke-width="2"/>'+oval(103,25,11,11,'#fff')+'<rect x="25" y="27" width="69" height="10" rx="5" fill="#fff"/>';
- const arms='<g class="arms">'+oval(23,104,11,22,fur)+oval(97,104,11,22,fur)+'</g>';
+ const arms='<g class="arms"><g class="arm arm-left" style="transform-origin:28px 100px">'+oval(23,104,11,22,fur)+oval(23,119,9,7,shade)+'</g><g class="arm arm-right" style="transform-origin:92px 100px">'+oval(97,104,11,22,fur)+oval(97,119,9,7,shade)+'</g></g>';
  const scarf=c.outfit==='scarf'?'<path d="M27 96 Q60 110 92 95 L87 108 Q60 123 33 108 Z" fill="#ec96b1"/><path d="M80 106 L99 129 L87 132 L72 114" fill="#e98aab"/>':'';
  const apron=c.outfit==='apron'?'<path d="M42 98 L78 98 L87 132 Q60 143 33 132 Z" fill="#f5ebee" stroke="#b08d99" stroke-width="2"/><path d="M50 119 Q60 126 70 119" fill="none" stroke="#cf8ba1" stroke-width="3"/>':'';
  const hat=c.headwear==='chef'?'<path d="M31 32 Q16 12 37 8 Q52 -5 62 7 Q82 -5 91 12 Q104 29 86 33 Z" fill="#fff" stroke="#cbbbc5" stroke-width="2"/><rect x="30" y="27" width="61" height="11" rx="4" fill="#fff0f7" stroke="#cbbbc5" stroke-width="2"/>':'';
  const bow=c.headwear==='bow'?'<path d="M89 32 Q112 15 111 39 Q110 52 89 42 Q70 56 72 37 Q75 26 89 32 Z" fill="#ed9cb8" stroke="#b97694" stroke-width="2"/>':'';
  const inspector=type==='inspector-cat'?'<path d="M57 97 L65 97 L68 116 L60 125 L53 116 Z" fill="#536579"/><circle cx="81" cy="65" r="12" fill="none" stroke="#8e7a56" stroke-width="3"/><path d="M93 64 L101 72" stroke="#8e7a56" stroke-width="2"/>':'';
- return '<svg viewBox="0 0 120 145" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+type+'"><g stroke="#745248" stroke-linejoin="round" stroke-width="2.5">'+behind+'<g class="legs">'+oval(40,128,13,17,fur)+oval(80,128,13,17,fur)+'</g>'+oval(60,102,38,39,fur)+bodyExtra+arms+ears+oval(60,62,48,43,fur)+faceExtra+eye+mouth+headExtra+inspector+scarf+apron+hat+bow+'</g></svg>';
+ return '<svg viewBox="0 -12 120 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+type+'"><g stroke="#745248" stroke-linejoin="round" stroke-width="2.5">'+behind+'<g class="legs"><g class="leg leg-left" style="transform-origin:40px 121px">'+oval(40,128,13,17,fur)+oval(39,140,12,5,shade)+'</g><g class="leg leg-right" style="transform-origin:80px 121px">'+oval(80,128,13,17,fur)+oval(81,140,12,5,shade)+'</g></g>'+oval(60,105,38,38,shade)+oval(60,100,37,38,fur)+bodyExtra+arms+'<g class="head" style="transform-origin:60px 89px">'+ears+oval(60,65,48,43,shade)+oval(60,61,47,42,fur)+faceExtra+'<ellipse cx="32" cy="76" rx="10" ry="5" fill="#ef9fa4" opacity=".36" stroke="none"/><ellipse cx="88" cy="76" rx="10" ry="5" fill="#ef9fa4" opacity=".36" stroke="none"/>'+eye+mouth+headExtra+'</g>'+inspector+scarf+apron+hat+bow+'</g></svg>';
 }
