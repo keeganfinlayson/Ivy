@@ -332,6 +332,21 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
     animation:none!important;
   }
 }
+
+/* A small story beat: taste first, then the face reacts and the stars appear. */
+.character-art .tasting-features{opacity:0}
+.illustrated-room .animal.react .reaction-features{animation:reaction-face-reveal 1.12s ease-out both}
+.illustrated-room .animal.react .tasting-features{animation:reaction-taste-hold 1.12s ease-out both}
+.illustrated-room .reaction{animation:pop .4s .65s both}
+@keyframes reaction-face-reveal{0%,42%{opacity:0}60%,100%{opacity:1}}
+@keyframes reaction-taste-hold{0%,42%{opacity:1}60%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){
+ .illustrated-room .animal.react .reaction-features{animation:none!important;opacity:1}
+ .illustrated-room .animal.react .tasting-features{animation:none!important;opacity:0}
+ .illustrated-room .reaction{animation:none!important}
+}
+.low-motion .illustrated-room .animal.react .reaction-features{opacity:1}
+.low-motion .illustrated-room .animal.react .tasting-features{opacity:0}
 </style></head><body>
 <header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.17 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
 <main>
