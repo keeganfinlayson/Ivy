@@ -28,6 +28,8 @@ export function safeFurniturePosition(x,y){
 export function routeFor(start,destination){
  // Customers walk along a corridor behind the line, rather than through standing guests.
  if(destination==='waiting'){
+  // Following visits advance from the front of the existing line.
+  if(start.x>=.35&&start.y>=.78)return [{x:.645,y:.855}];
   return [{x:.18,y:.69},{x:.645,y:.69},{x:.645,y:.855}];
  }
  if(destination==='bench'){
