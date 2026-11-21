@@ -532,7 +532,7 @@ test('Version-two saved restaurants migrate without losing coins',()=>{
 
 test('A visible queue advances one person after each meal',()=>{
  const r=new Restaurant(null,{random:()=>.8});const front=r.queueIds[0];
- arrive(r);counter(r);mixed(r,['strawberry','milk']);r.serve();r.beginLeave();r.finishLeave();
+ arrive(r);toCounter(r);mix(r,['strawberry','milk']);r.serve();r.beginLeave();r.finishLeave();
  ensure(r.currentId===front,'previous queue front was not promoted');
  ensure(r.cameFromLine&&r.customer.position.x===LINE_SPOTS[0].x,'next customer started at wrong place');
  arrive(r);ensure(r.customer.position.x===LOCATIONS.waiting.x,'next guest failed to step forward')
