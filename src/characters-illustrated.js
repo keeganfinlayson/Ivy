@@ -170,12 +170,15 @@ export function characterSVG(c,expression='idle'){
       +S('M112 48 Q138 45 147 67 L145 81 Q130 88 114 76 Z','#A8A7B2','opacity=".93"')
       +S('M40 119 L24 113 M41 125 L23 129 M135 117 L151 111 M136 125 L156 130','none','stroke="#A88B8A" stroke-width="2.6" stroke-linecap="round"'):'';
   const faceArt=replaceDefs(face(exp,species,p));
+  const isReaction=['love','happy','yuck'].includes(exp);
+  const expressionLayer=g('reaction-features',faceArt);
+  const firstTasteLayer=isReaction?g('tasting-features',replaceDefs(face('taste',species,p))):'';
   const head=g('head',
      replaceDefs(special.rear)
     +headShape
     +S('M39 62 Q67 29 113 43','none','stroke="#FFE5C4" stroke-width="8" stroke-linecap="round" opacity=".5"')
     +catPatch+replaceDefs(special.markings)
-    +faceArt+replaceDefs(special.extras)+dress.top);
+    +expressionLayer+firstTasteLayer+replaceDefs(special.extras)+dress.top);
   const cheeks=species==='ghost'?E(86,137,7,5,'#D0DFF0'):''; 
   const body=species==='ghost'?replaceDefs(special.ghostShape||''):torso;
   const defs='<defs>'
