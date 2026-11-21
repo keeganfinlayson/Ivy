@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f8cddd"><title>Mochi Munch — v0.15</title>
+<style>
+:root{font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;color:#634657;background:#fff5f8}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}
+button,select{font:inherit;color:#684b5b;cursor:pointer}
+button{background:#ffe4ed;border:2px solid #d89cb3;border-radius:13px;padding:11px 15px;font-weight:700;min-height:45px;box-shadow:0 2px 0 #cc91aa}
+button:hover:not(:disabled){background:#ffd1e1}button:focus-visible,select:focus-visible{outline:3px solid #8f5790;outline-offset:2px}
+button:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
+select{background:white;border:2px solid #d8b0c0;border-radius:11px;padding:9px;max-width:100%}
+h1{font-size:clamp(1.23rem,2.6vw,1.7rem);margin:0;line-height:1.35}h2{font-size:1.36rem;margin:0 0 11px}h3{font-size:1rem;margin:8px 0}
+p{line-height:1.5}
+.hidden{display:none!important}
+header{background:#fbe0e9;border-bottom:3px solid #dfb4c3;box-shadow:0 3px 12px #8d5b6d20}
+.topline{max-width:1040px;margin:auto;padding:11px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.version{font-size:.58em;font-weight:700;padding:5px 9px;border-radius:14px;background:#fff7fa;vertical-align:middle;white-space:nowrap}
+.treasury{font-size:1.05rem;font-weight:800;background:white;padding:9px 16px;border-radius:15px;white-space:nowrap}
+main{max-width:1040px;margin:auto;padding:13px 16px 30px}
+.tabs,.actions,.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.tabs{margin-bottom:15px}.tabs button{background:white;padding:10px 13px}
+.tabs button.active,.shop-tabs button.active{background:#de9eb9;color:#462e3d;border-color:#bd7394}
+#giftBtn:not(:disabled){background:#fff1c9;border-color:#dfc079}
+.game-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;padding:0 4px 9px;font-weight:700}
+.guestline{font-size:.95rem;color:#806777}
+.card{background:white;border:3px solid #e0aec2;border-radius:20px;padding:18px;box-shadow:0 4px 0 #efd8e1}
+.room{position:relative;width:100%;height:460px;overflow:hidden;border:6px solid #e4b0c6;border-radius:22px;isolation:isolate;touch-action:pan-y;background:linear-gradient(to bottom,#ffe4ef 0 71%,#e1bea5 71% 100%)}
+.room:before{content:"";position:absolute;inset:0 0 29%;background-image:radial-gradient(#fff9 1px,transparent 1px);background-size:34px 34px;opacity:.32;pointer-events:none}
+.room[data-wallpaper="mint-wallpaper"]{background:linear-gradient(#d1f1e0 0 71%,#debb9d 71%)}
+.room[data-wallpaper="sky-wallpaper"]{background:linear-gradient(#d2ecff 0 71%,#e1c1a6 71%)}
+.room[data-wallpaper="sunset-wallpaper"]{background:linear-gradient(#fbd8b9 0 71%,#e3b4a6 71%)}
+.window{position:absolute;top:8%;left:8%;width:19%;height:32%;border:10px solid white;border-radius:18px;background:linear-gradient(#a8d5f3,#ddf4ff);box-shadow:0 6px 0 #c79aaf;overflow:hidden}
+.window:before{content:"";position:absolute;top:0;bottom:0;left:47%;border-left:6px solid white;z-index:2}
+.window:after{content:"";position:absolute;top:48%;left:0;right:0;border-top:6px solid white;z-index:2}
+.window .clouds{position:absolute;inset:15% 0;background:radial-gradient(ellipse at 35% 35%,#ffffffdd 0 17%,transparent 18%),radial-gradient(ellipse at 76% 59%,#ffffffcd 0 17%,transparent 18%)}
+.window[data-weather="rain"]{background:repeating-linear-gradient(110deg,transparent 0 20px,#d4f1ffdd 20px 22px,transparent 22px 38px),linear-gradient(#8cb5cd,#bde5ea)}
+.window[data-weather="night"]{background:radial-gradient(circle at 73% 23%,#fff1ac 0 12%,transparent 13%),linear-gradient(#355473,#83a4c5)}
+.door{position:absolute;left:1%;bottom:27%;height:36%;width:10%;border:5px solid #c59aaa;border-radius:45% 45% 0 0;background:#fffafc;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#b58da1}
+.bench{position:absolute;bottom:16%;left:13%;width:23%;height:14%;border:6px solid #b9829e;background:linear-gradient(#f9cfe0,#eaaec5);border-radius:17px;box-shadow:0 26px 0 -12px #a77e91}
+.counter{position:absolute;right:3%;bottom:5%;width:37%;height:24%;background:linear-gradient(#ffe2eb 0 16%,#f0afc5 17%);border:7px solid #b98299;border-radius:19px;box-shadow:0 8px 0 #b08a8c;display:flex;align-items:center;justify-content:center;font-weight:900;letter-spacing:.08em;z-index:4;color:#6d4d5c}
+.pendant{position:absolute;right:18%;top:0;width:55px;height:77px;border-left:4px solid #d0a8bb}
+.pendant:after{content:"";position:absolute;bottom:0;left:-22px;width:45px;height:24px;background:#ffe9b5;border:3px solid #c7a675;border-radius:50% 50% 20% 20%}
+.shelf{position:absolute;top:12%;right:8%;font-size:27px;letter-spacing:5px;background:#fff8f5b9;border-bottom:7px solid #cb9f8e;border-radius:8px;padding:3px 8px}
+.animal{position:absolute;width:108px;height:132px;transform:translate(-50%,-100%);z-index:6;filter:drop-shadow(0 5px 3px #5d405439);pointer-events:none}
+.animal svg,.guest svg{width:100%;height:100%;overflow:visible}
+.animal.walk svg{animation:hop .25s ease-in-out infinite alternate}.animal.walk .legs{animation:step .24s alternate infinite;transform-origin:center 77%}
+.animal.walk .arms{animation:wave .24s alternate infinite;transform-origin:center 62%}
+.animal.sit svg{transform-origin:50% 100%;transform:scaleY(.86)}
+.animal.sleep svg{animation:breathing 2s ease-in-out infinite alternate}
+.animal.eat svg{animation:hop .35s ease-in-out infinite alternate}
+@keyframes hop{to{transform:translateY(-5px)}}@keyframes step{to{transform:skewX(14deg)}}@keyframes wave{to{transform:rotate(10deg)}}@keyframes breathing{to{transform:scaleY(.97)}}
+.guest-layer{position:absolute;inset:0;pointer-events:none;z-index:3}.guest{position:absolute;width:77px;height:94px;transform:translate(-50%,-100%);filter:drop-shadow(0 3px 2px #0002)}
+.guest-0{left:27%;top:72%}.guest-1{left:15%;top:89%}.guest-2{left:38%;top:86%}
+.decor-layer{position:absolute;inset:0;z-index:5;pointer-events:none}
+.decor-layer.editing{pointer-events:none}
+.decor-item{position:absolute;transform:translate(-50%,-50%);font-size:37px;min-width:61px;min-height:61px;padding:5px;border:3px solid color-mix(in srgb,var(--tint),#63505a 23%);background:color-mix(in srgb,var(--tint),white 62%);border-radius:22px;box-shadow:0 4px 0 #76536833;pointer-events:none;touch-action:none}
+.decor-layer.editing .decor-item{pointer-events:auto;cursor:grab}.decor-layer.editing .decor-item:active{cursor:grabbing}
+.decor-item.chosen{outline:3px dashed #814b85;outline-offset:3px}
+.cafe-food{position:absolute;z-index:8;top:47%;right:23%;font-size:56px;pointer-events:none;animation:pop .55s both}
+.reaction{position:absolute;z-index:9;right:2%;top:4%;width:min(270px,46%);background:#fffafc;box-shadow:0 7px 15px #7a526032;border:3px solid #e1a6bd;border-radius:18px;text-align:center;padding:12px;animation:pop .4s both}
+.reaction-stars{color:#d69621;font-size:26px}.reaction .reward{font-size:21px;font-weight:900}.reaction .bonus{font-size:12px;margin:5px 0;color:#866343}
+@keyframes pop{0%{opacity:0;transform:scale(.75)}80%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+.actions{margin:13px 0}
+.wardrobe{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:15px 0 4px}
+.wardrobe label{display:flex;align-items:center;gap:7px}
+.status{padding:14px 16px;background:white;border:2px solid #f0ccdc;border-radius:15px;margin:14px 0;min-height:52px}
+.hint{color:#866e7a;font-size:.88rem}.muted{color:#866e7a}.weather{font-size:.9rem}
+.kitchen-top{text-align:center;margin-bottom:10px}
+.ingredients{display:grid;grid-template-columns:repeat(auto-fit,minmax(127px,1fr));gap:11px}
+.ingredient{background:#fff5f9;min-height:90px}.ingredient span{display:block;font-size:31px}
+.cook-table{margin:18px 0 0;padding:20px;border-radius:19px;background:linear-gradient(#ffe7ce,#f4d5b7);border:3px solid #dfb68e}
+.bowl{min-height:128px;background:linear-gradient(#fff,#ffe7ef);border:5px dashed #d9a3bd;border-radius:50% 50% 24% 24%;display:flex;justify-content:center;align-items:center;flex-direction:column;text-align:center;padding:15px;margin:0 auto 15px;max-width:520px}
+.bowl-emoji{font-size:50px}.bowl.stirring .bowl-emoji{animation:stir .32s ease-in-out}
+@keyframes stir{0%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}100%{transform:rotate(0)}}
+.selected-text{font-size:.95rem;margin:5px}.cook-step{background:#fff7f1;border-radius:17px;padding:15px;margin:12px 0;text-align:center}
+.cook-step .actions{justify-content:center}.oven{font-size:55px;display:block;animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{to{filter:drop-shadow(0 0 16px #f3aa50)}}
+.progress-track{width:100%;height:12px;background:#e8d0bf;border-radius:10px;overflow:hidden}.progress-fill{width:0;height:100%;background:#e2a064;transition:width .12s}
+.discovered{background:#fff2c6;border:3px solid #e1c477;border-radius:19px;padding:20px;text-align:center;animation:pop .5s both}
+.discovered .dish{display:block;font-size:72px}
+.shop-tabs{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px}
+.shop-card{border:2px solid #ecc9d8;border-radius:17px;padding:15px;text-align:center;background:#fffafd}
+.shop-card p{font-size:.87rem;color:#866f79;min-height:40px}.shop-card .shop-icon{font-size:42px}.shop-card button{width:100%}
+.decor-panel{background:#fff;border:2px solid #dfb7cb;border-radius:15px;padding:14px;margin:13px 0}
+.decor-panel label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.achievement{padding:15px;border:2px dashed #e5c9d4;background:#faf4f8;border-radius:14px;margin:10px 0}.achievement.earned{border-style:solid;background:#fffae6;border-color:#e8c97a}
+.confetti{position:fixed;inset:0;z-index:30;pointer-events:none;overflow:hidden}
+.confetti span{position:absolute;top:-10%;font-size:32px;animation:confetti 2.4s forwards ease-in}
+@keyframes confetti{to{transform:translateY(120vh) rotate(460deg);opacity:0}}
+.settings{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0}
+.settings button{font-size:.85rem;min-height:36px;padding:7px 11px}
+footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
+.low-motion *, .low-motion *:before,.low-motion *:after{animation:none!important;transition:none!important}
+@media(max-width:690px){
+ header .topline{padding:10px}main{padding:10px}
+ .tabs{gap:6px}.tabs button{font-size:.85rem;padding:8px 10px;min-height:42px}
+ .room{height:350px;border-width:4px}.window{border-width:6px}.counter{font-size:.8rem;border-width:5px}
+ .animal{width:83px;height:105px}.guest{width:54px;height:72px}
+ .cafe-food{font-size:41px}.reaction{padding:7px;font-size:.82rem}.reaction-stars{font-size:18px}
+ .door{font-size:9px}.shelf{font-size:18px}.decor-item{font-size:29px;min-width:50px;min-height:50px}
+ .card{padding:13px}.ingredients{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){.animal.walk svg,.animal.walk .legs,.animal.walk .arms,.animal.eat svg,.confetti span,.discovered,.reaction,.cafe-food,.oven{animation:none!important}}
+
+/* Phase 5: playful background surprises, without graphic effects. */
+.peek-kitty{position:absolute;z-index:3;left:1%;bottom:41%;width:54px;height:58px;font-size:39px;padding:0;border:0;background:transparent;box-shadow:none;animation:peek 2s ease-in-out infinite alternate;filter:drop-shadow(0 4px 3px #0002)}
+.peek-kitty:hover{background:transparent!important}
+@keyframes peek{0%{transform:translateX(-24px) rotate(-10deg)}100%{transform:translateX(0) rotate(8deg)}}
+.guest-1 svg{animation:breathing 2s ease-in-out infinite alternate}
+.guest-2 svg{animation:hop 2.6s ease-in-out infinite alternate}
+.bowl-pieces{display:flex;justify-content:center;align-items:center;gap:9px;min-height:39px;flex-wrap:wrap}
+.bowl-pieces span{font-size:26px;display:inline-block;animation:pop .25s both}
+.bowl.mixing .bowl-pieces span{animation:mixloop .6s ease-in-out infinite alternate}
+.bowl.mixing .bowl-pieces span:nth-child(even){animation-direction:alternate-reverse}
+@keyframes mixloop{to{transform:translateY(-8px) rotate(28deg)}}
+.low-motion .peek-kitty,.low-motion .guest-1 svg,.low-motion .guest-2 svg{animation:none!important}
+@media(prefers-reduced-motion:reduce){.peek-kitty,.guest-1 svg,.guest-2 svg,.bowl.mixing .bowl-pieces span{animation:none!important}}
+.hearts{position:absolute;z-index:8;top:27%;left:58%;font-size:27px;animation:heartfloat 1.6s infinite ease-in-out;pointer-events:none}
+@keyframes heartfloat{0%{opacity:.4;transform:translateY(8px) scale(.9)}65%{opacity:1}100%{opacity:.25;transform:translateY(-22px) scale(1.13)}}
+.low-motion .hearts{animation:none}
+@media(prefers-reduced-motion:reduce){.hearts{animation:none!important}}
+
+/* v0.15 illustrated café environment — layered scenery, woodwork and soft lighting */
+.room{background:linear-gradient(180deg,#ffe9e9 0%,#ffe9e9 59%,#efc9b5 59%,#e3ae91 100%);border-color:#d6a3a3;box-shadow:inset 0 0 0 5px #fff8ee,inset 0 -24px 55px #99674b25;perspective:700px}
+.room:before{inset:0 0 41%;background-image:repeating-linear-gradient(90deg,transparent 0 105px,#d6a2a21e 106px 108px),linear-gradient(180deg,#fff7f28a,#ffe5e100);opacity:1}
+.room:after{content:"";position:absolute;left:-10%;right:-10%;bottom:0;height:41%;z-index:0;pointer-events:none;background:repeating-linear-gradient(92deg,transparent 0 65px,#ab795b32 66px 68px),repeating-linear-gradient(0deg,transparent 0 42px,#fdf0df66 43px 45px),linear-gradient(#eec9ad,#d6a080);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.room[data-wallpaper="mint-wallpaper"]{background:linear-gradient(#d8f1e7 0 59%,#ebc8ac 59% 100%)}
+.room[data-wallpaper="sky-wallpaper"]{background:linear-gradient(#d7eafa 0 59%,#ebc8ac 59% 100%)}
+.room[data-wallpaper="sunset-wallpaper"]{background:linear-gradient(#fbd8c6 0 59%,#ebc8ac 59% 100%)}
+.window{top:7%;left:11%;width:23%;height:36%;border:11px solid #fff8ee;border-radius:55px 55px 18px 18px;background:linear-gradient(#a6d5e4,#d8e8c7 72%,#a6bf9e 73%);box-shadow:0 0 0 3px #cb9c94,0 9px 0 #c58e80,0 14px 18px #805b4b30}
+.window:before{border-color:#fff7ed;left:49%}.window:after{border-color:#fff7ed}
+.window .clouds{background:radial-gradient(ellipse at 28% 34%,#fff 0 15%,transparent 16%),radial-gradient(ellipse at 66% 50%,#fff 0 17%,transparent 18%),linear-gradient(0deg,#8ebc8a 0 17%,transparent 18%)}
+.door{left:0;bottom:39%;height:44%;width:10%;border:7px solid #b88c7e;border-radius:65px 65px 0 0;background:linear-gradient(100deg,#e9bca3,#f5d7bb);box-shadow:inset -8px 0 0 #d9a98f,5px 7px 9px #9e6e6630;color:#9d7269}
+.door:after{content:"";position:absolute;right:10px;top:57%;width:8px;height:8px;border-radius:50%;background:#d7a853;box-shadow:0 0 0 2px #b98e4d}
+.bench{bottom:17%;left:12%;width:26%;height:12%;border:6px solid #ad7c78;border-radius:24px 24px 12px 12px;background:linear-gradient(#f4c9ba,#e9a9a9);box-shadow:0 16px 0 -7px #a77a6d,0 27px 0 -14px #9b6e5f,0 31px 14px #956c5230;z-index:2}
+.counter{right:2%;bottom:4%;width:36%;height:24%;z-index:7;border:6px solid #ad7971;border-top:14px solid #fff5e7;border-radius:10px 10px 19px 19px;background:repeating-linear-gradient(90deg,#d99d8f 0 35px,#d29a88 36px 40px,#edb8a4 41px 76px);box-shadow:0 12px 0 #9d6f62,0 16px 17px #76544642;color:#805450;text-shadow:0 1px #ffe7dc}
+.counter:before{content:"";position:absolute;top:-26px;left:-5%;right:-5%;height:16px;background:#fff6e8;border:3px solid #bf8e80;border-radius:11px;box-shadow:0 5px 0 #ddad9c}
+.pendant{right:22%;height:60px;border-color:#b98e81;z-index:1}
+.pendant:after{width:58px;height:27px;left:-30px;background:linear-gradient(#ffeec7,#f3d39a);border-color:#c4a278;box-shadow:0 16px 28px #ffe9ad6b}
+.shelf{top:13%;right:5%;font-size:26px;z-index:2;border-bottom:10px solid #bf8f7c;background:#fff7ed8c;box-shadow:0 7px 12px #85685a24}
+.room .guest-layer{z-index:3}.room .decor-layer{z-index:5}
+.animal{width:122px;height:148px;transform:translate(-50%,-100%);z-index:6;filter:drop-shadow(0 6px 2px #76544c35)}
+.guest{width:87px;height:106px;filter:drop-shadow(0 4px 2px #79544c32)}
+.animal.walk svg{animation:body-bob .42s ease-in-out infinite}
+.animal.walk .leg-left{animation:stride-left .42s ease-in-out infinite alternate}
+.animal.walk .leg-right{animation:stride-right .42s ease-in-out infinite alternate}
+.animal.walk .arm-left{animation:stride-right .42s ease-in-out infinite alternate}
+.animal.walk .arm-right{animation:stride-left .42s ease-in-out infinite alternate}
+.animal.walk .head{animation:head-bob .42s ease-in-out infinite alternate}
+.animal.sit svg{transform:translateY(10px) scaleY(.85);transform-origin:50% 100%}
+.animal.sit .leg-left{transform:translate(-8px,-6px) rotate(-30deg)}
+.animal.sit .leg-right{transform:translate(8px,-6px) rotate(30deg)}
+.animal.sleep svg{animation:breathing 2.3s ease-in-out infinite alternate;transform-origin:50% 100%}
+.animal.sleep .head{transform:rotate(9deg) translateY(4px)}
+.animal.sleep .arm-left{transform:rotate(18deg)}
+.animal.sleep .arm-right{transform:rotate(-18deg)}
+.animal.eat svg{animation:taste-bounce .55s ease-in-out infinite alternate}
+.animal.eat .arm-left{animation:taste-left .55s ease-in-out infinite alternate}
+.animal.eat .arm-right{animation:taste-right .55s ease-in-out infinite alternate}
+.animal.eat .head{animation:head-bob .55s ease-in-out infinite alternate}
+.guest-0 svg{animation:breathing 2.6s ease-in-out infinite alternate}
+.guest-1 svg{animation:guest-sway 3.2s ease-in-out infinite alternate}
+.guest-2 svg{animation:guest-sway 2.8s ease-in-out infinite alternate-reverse}
+@keyframes body-bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+@keyframes stride-left{to{transform:rotate(24deg)}}
+@keyframes stride-right{to{transform:rotate(-24deg)}}
+@keyframes head-bob{to{transform:rotate(4deg) translateY(2px)}}
+@keyframes taste-bounce{to{transform:translateY(-3px) scale(1.025)}}
+@keyframes taste-left{to{transform:rotate(-24deg) translateY(-5px)}}
+@keyframes taste-right{to{transform:rotate(24deg) translateY(-5px)}}
+@keyframes guest-sway{to{transform:rotate(3deg) translateY(-3px)}}
+@media(max-width:690px){.animal{width:94px;height:117px}.guest{width:65px;height:80px}.window{border-width:7px}.counter{border-width:4px;border-top-width:10px}}
+@media(prefers-reduced-motion:reduce){.animal.walk svg,.animal.walk .leg-left,.animal.walk .leg-right,.animal.walk .arm-left,.animal.walk .arm-right,.animal.walk .head,.animal.sleep svg,.animal.eat svg,.animal.eat .head,.animal.eat .arm-left,.animal.eat .arm-right,.guest svg{animation:none!important}}
+</style></head><body>
+<header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.15 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
+<main>
+<nav class="tabs" aria-label="Game areas">
+<button id="navCafe" class="active">☕ Café</button>
+<button id="navKitchen">🥣 Kitchen</button>
+<button id="navShop">🛍️ Shop</button>
+<button id="navDecor">🪑 Decorate</button>
+<button id="navAchievements">🏆 Prizes</button>
+<button id="giftBtn">🎁 Daily gift</button>
+</nav>
+<div class="game-head"><span id="currentGuest">Welcome!</span><span id="guestCount">Served: 0</span><span id="weatherCaption" class="weather"></span></div>
+<section id="cafeScreen">
+<div class="card">
+<div class="guestline" id="waiting">Waiting:</div>
+<div class="room" id="room" data-wallpaper="default">
+ <div class="window" id="window"><div class="clouds"></div></div>
+ <div class="door">ENTRY</div><button type="button" id="peekKitty" class="peek-kitty hidden" aria-label="Peekaboo Kitty">🐱</button><div class="bench"></div><div class="pendant"></div><div class="shelf">🪴 🫙</div>
+ <div class="counter">COUNTER</div>
+ <div class="decor-layer" id="decorLayer"></div>
+ <div class="guest-layer" id="guestLayer"></div>
+ <div class="animal" id="animal"></div>
+ <div class="cafe-food hidden" id="foodInCafe" aria-hidden="true"></div>
+ <div class="reaction hidden" id="reaction" role="status"></div><div id="hearts" class="hearts hidden" aria-hidden="true">💗 💕 ✨</div>
+</div>
+<div id="cafeActions" class="actions">
+<button id="counterBtn">Call to counter</button>
+<button id="seatBtn">Sit down</button>
+<button id="sleepBtn">Take a nap</button>
+<button id="kitchenBtn">Make food</button>
+<button id="serveBtn">Serve food</button>
+<button id="nextBtn">Next customer</button>
+</div>
+<div id="wardrobe" class="wardrobe">
+<label>Outfit <select id="outfit"><option value="none">No outfit</option><option value="scarf">Scarf</option><option value="apron">Apron</option></select></label>
+<label>Hat <select id="hat"><option value="none">No hat</option><option value="chef">Chef hat</option><option value="bow">Bow</option></select></label>
+</div>
+<div id="decorPanel" class="decor-panel hidden">
+<p id="decorHint"></p>
+<div class="toolbar">
+<label>Wallpaper <select id="wallpaperSelect"><option value="default">Original Pink</option></select></label>
+<label>Furniture color <select id="colorSelect"><option value="pink">Pink</option><option value="mint">Mint</option><option value="lavender">Lavender</option><option value="sunshine">Sunshine</option></select></label>
+<button id="shopFromDecor">Get furniture</button><button id="doneBtn">Done ✓</button>
+</div></div>
+</div></section>
+<section id="kitchenScreen" class="card hidden">
+<div class="kitchen-top"><h2>Kitchen</h2><p>Pick ingredients and see what happens. There is no recipe book — every surprise is a discovery!</p></div>
+<div id="ingredients" class="ingredients"></div>
+<div class="cook-table">
+<div class="bowl" id="bowl" aria-label="Mixing bowl"><span class="bowl-emoji">🥣</span><div id="bowlPieces" class="bowl-pieces" aria-hidden="true"></div><span id="selected" class="selected-text">Nothing in the bowl yet</span></div>
+<div class="actions" id="preparation"><button id="emptyBtn">Empty bowl</button><button id="mixBtn">Mix ingredients</button><button id="bakeBtn">Bake in oven</button><button id="returnBtn">Back to café</button></div>
+<div id="mixing" class="cook-step hidden"><p id="stirText">Keep stirring!</p><div class="actions"><button id="stirBtn">Stir the bowl!</button></div></div>
+<div id="baking" class="cook-step hidden"><span class="oven">🔥🧁</span><p id="ovenText">Your food is baking...</p><div class="progress-track"><div class="progress-fill" id="ovenGauge"></div></div><div class="actions"><button id="ovenBtn" disabled>Open oven</button></div></div>
+<div id="discovered" class="discovered hidden"><span id="dishEmoji" class="dish">🧁</span><h2 id="dishName">Surprise!</h2><p>Now let your customer taste it!</p><button id="bringBtn">Bring to counter</button></div>
+</div></section>
+<section id="shopScreen" class="card hidden">
+<h2>Little Shop</h2><p>Spend your earned coins on new ingredients, animal invitations, furniture, wallpaper, and helpful kitchen tools. Purchases stay unlocked.</p>
+<div class="shop-tabs"><button data-shop="ingredients">Ingredients</button><button data-shop="customers">Customers</button><button data-shop="decor">Furniture & Wallpaper</button><button data-shop="tools">Tools</button></div>
+<div id="shopItems" class="shop-grid"></div><div class="actions"><button id="shopBackBtn">Back to game</button></div>
+</section>
+<section id="achievementsScreen" class="card hidden"><h2>Prizes and achievements</h2><p>Earn five bonus coins for each new achievement. A special celebration happens at fifty customers!</p><div id="achievementItems"></div></section>
+<p id="status" class="status" role="status" aria-live="polite">Welcome to your restaurant!</p>
+<div class="settings"><span class="hint">Your restaurant saves on this device. Prototype artwork; no explicit gross effects.</span><div class="toolbar"><button id="soundBtn">🔈 Sound off</button><button id="motionBtn">Motion: normal</button></div></div>
+<footer>Mochi Munch · Version 0.15 (Development)</footer>
+</main><div id="confetti" class="confetti hidden" aria-hidden="true"></div>
+<script type="module" src="./src/ui-v14.js"></script></body></html>
