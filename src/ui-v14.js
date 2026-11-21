@@ -1,12 +1,13 @@
-/* Mochi Munch interface v0.14 — all gameplay is delegated to restaurant-v3. */
+/* Mochi Munch interface v0.16 — scrollable scene with protected queue formation. */
 import {STATES,LOCATIONS} from './game-core.js';
 import {Restaurant,SAVE_KEY,convertLegacy} from './restaurant-v3.js';
 import {INGREDIENTS} from './recipes.js';
 import {SPECIES,SHOP_CATALOG,FURNITURE_COLORS,ACHIEVEMENTS,dateKey,itemById,guestLabel} from './game-content.js';
 import {characterSVG} from './characters.js';
+import {LINE_SPOTS,routeFor,cameraPosition,WORLD_WIDTH} from './scene-layout.js';
 
 const $=id=>document.getElementById(id);
-const room=$('room'),animal=$('animal'),status=$('status');
+const room=$('room'),viewport=$('roomViewport'),animal=$('animal'),status=$('status');
 const OS_REDUCED=!!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const SETTINGS_KEY='mochi-munch-settings';
 function readSave(){try{
@@ -18,6 +19,7 @@ const session=new Restaurant(readSave());
 let settings={sound:false,reduce:false};try{settings={...settings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}}catch{}
 let view=session.scene==='kitchen'?'kitchen':'cafe',shopTab='ingredients',selectedDecor=null;
 let visualPos={...session.customer.position},animating=false,frame=null,flashTimeout=null,audio=null,peekHiddenAt=-1;
+const queueElements=new Map();
 const reduceMotion=()=>settings.reduce||OS_REDUCED;
 
 function announce(t){status.textContent=t}
@@ -44,12 +46,31 @@ function mood(c,active=false){
  return 'idle';
 }
 function renderAnimal(){
- const c=session.customer;
- if(!c)return;
+ const c=session.customer;if(!c)return;
  animal.innerHTML=characterSVG(c,mood(c,true));
  animal.className='animal '+(animating?'walk':session.phase==='finished'?'eat':c.state===STATES.SEATED?'sit':c.state===STATES.SLEEPING?'sleep':'');
  animal.style.left=(visualPos.x*100)+'%';animal.style.top=(visualPos.y*100)+'%';
- $('guestLayer').innerHTML=session.queue.map((guest,index)=>'<div class="guest guest-'+index+'">'+characterSVG(guest,mood(guest))+'</div>').join('');
+ // Keep each queue animal's DOM element so position changes animate smoothly.
+ const living=new Set(),layer=$('guestLayer');
+ for(const [index,guest] of session.queue.entries()){
+  living.add(guest.id);
+  let node=queueElements.get(guest.id),isNew=!node;
+  if(isNew){
+   node=document.createElement('div');node.className='guest';
+   node.dataset.guestId=guest.id;
+   node.innerHTML=characterSVG(guest,mood(guest));
+   node.style.left='34%';node.style.top='69%';
+   queueElements.set(guest.id,node);layer.append(node);
+  }
+  const spot=LINE_SPOTS[index]||LINE_SPOTS[LINE_SPOTS.length-1];
+  const move=()=>{if(!queueElements.has(guest.id))return;node.style.left=(spot.x*100)+'%';node.style.top=(spot.y*100)+'%'};
+  // First draw is static; later new guests walk into the back of the line.
+  if(isNew&&session.served>0&&!reduceMotion())requestAnimationFrame(move);
+  else move();
+ }
+ for(const [id,node] of queueElements){
+  if(!living.has(id)){node.remove?.();queueElements.delete(id)}
+ }
 }
 function renderDecor(){
  const layer=$('decorLayer');layer.replaceChildren();
@@ -69,7 +90,10 @@ function renderDecor(){
    let dragging=false;
    el.onpointerdown=e=>{if(e.button!==undefined&&e.button!==0)return;selectedDecor=decoration.id;dragging=true;el.setPointerCapture?.(e.pointerId);el.classList.add('chosen');$('colorSelect').value=decoration.color};
    el.onpointermove=e=>{if(!dragging)return;const bounds=room.getBoundingClientRect();const x=Math.max(.06,Math.min(.94,(e.clientX-bounds.left)/bounds.width)),y=Math.max(.35,Math.min(.92,(e.clientY-bounds.top)/bounds.height));el.style.left=x*100+'%';el.style.top=y*100+'%'};
-   el.onpointerup=e=>{if(!dragging)return;dragging=false;const bounds=room.getBoundingClientRect();act(()=>session.decorate(decoration.id,(e.clientX-bounds.left)/bounds.width,(e.clientY-bounds.top)/bounds.height,decoration.color));announce('Furniture moved. Choose Done to finish.')};
+   el.onpointerup=e=>{if(!dragging)return;dragging=false;const bounds=room.getBoundingClientRect();const x=(e.clientX-bounds.left)/bounds.width,y=(e.clientY-bounds.top)/bounds.height;
+ const result=act(()=>session.decorate(decoration.id,x,y,decoration.color));
+ if(result)announce(Math.abs(result.x-x)>.03||Math.abs(result.y-y)>.03?'Furniture moved to keep the customer line clear.':'Furniture moved. Choose Done to finish.');
+};
    el.onpointercancel=()=>{dragging=false;renderDecor()};
   }
   layer.append(el);
@@ -216,25 +240,49 @@ function render(){
  if(view==='decorate')renderDecorPanel();
  if(view==='achievements')renderAchievements();
 }
-function moveTo(target,done){
+function followCamera(worldX){
+ const width=room.clientWidth||WORLD_WIDTH,viewWidth=viewport.clientWidth||Math.min(width,960);
+ viewport.scrollLeft=cameraPosition(worldX,width,viewWidth);
+}
+function moveTo(target,done,destination=''){
  if(animating)return;
- animating=true;const start={...visualPos},finish={...target};
- const length=Math.hypot((finish.x-start.x)*room.clientWidth,(finish.y-start.y)*room.clientHeight);
- const duration=reduceMotion()?1:Math.max(250,length/130*1000);let begin=null;
+ const start={...visualPos};
+ const points=routeFor(start,destination);
+ if(!points.length||Math.hypot(points[points.length-1].x-target.x,points[points.length-1].y-target.y)>.001)points.push({...target});
+ // Walk via waypoints, following the scene without passing through the standing line.
+ const legs=[];let total=0,prev=start;
+ for(const end of points){
+  const len=Math.hypot((end.x-prev.x)*room.clientWidth,(end.y-prev.y)*room.clientHeight);
+  if(len>0.1){legs.push({from:prev,to:end,start:total,end:total+len,length:len});total+=len}
+  prev=end;
+ }
+ animating=true;const duration=reduceMotion()?1:Math.max(280,total/230*1000);let begin=null;
+ render();followCamera(start.x);
  function step(t){
   if(begin===null)begin=t;
-  const x=Math.min(1,(t-begin)/duration),ease=x*x*(3-2*x);
-  visualPos={x:start.x+(finish.x-start.x)*ease,y:start.y+(finish.y-start.y)*ease};
-  animal.style.left=visualPos.x*100+'%';animal.style.top=visualPos.y*100+'%';
-  if(x<1)frame=requestAnimationFrame(step);
-  else{frame=null;animating=false;try{done()}catch(e){announce(e.message)}visualPos={...session.customer.position};render();persist()}
+  const progress=Math.min(1,(t-begin)/duration),distance=progress*total;
+  const leg=legs.find(segment=>distance<=segment.end)||legs[legs.length-1];
+  if(leg){
+   const fraction=Math.max(0,Math.min(1,(distance-leg.start)/leg.length));
+   visualPos={x:leg.from.x+(leg.to.x-leg.from.x)*fraction,y:leg.from.y+(leg.to.y-leg.from.y)*fraction};
+   animal.style.left=visualPos.x*100+'%';animal.style.top=visualPos.y*100+'%';
+   animal.style.setProperty('--walk-direction',leg.to.x<leg.from.x?'-1':'1');
+   followCamera(visualPos.x);
+  }
+  if(progress<1)frame=requestAnimationFrame(step);
+  else{
+   frame=null;animating=false;
+   try{done()}catch(e){announce(e.message)}
+   visualPos={...session.customer.position};render();persist();
+   followCamera(visualPos.x);
+  }
  }
- render();frame=requestAnimationFrame(step);
+ frame=requestAnimationFrame(step);
 }
 function moveAction(fn,message){
  try{
   const target=fn();announce(message);
-  if(target)moveTo(target,()=>{session.finishMove();announce('Your customer is ready!')});
+  if(target)moveTo(target,()=>{session.finishMove();announce('Your customer is ready!')},session.pendingMove?.destination);
   else{render();persist()}
  }catch(e){announce(e.message)}
 }
@@ -242,6 +290,8 @@ function arrive(){
  if(session.phase!=='arriving'||animating)return;
  moveAction(()=>session.planMove('waiting',STATES.WAITING),'A new visitor is arriving!');
 }
+$('panLeft').onclick=()=>{viewport.scrollLeft=Math.max(0,viewport.scrollLeft-viewport.clientWidth*.8)};
+$('panRight').onclick=()=>{viewport.scrollLeft=Math.min(Math.max(0,room.clientWidth-viewport.clientWidth),viewport.scrollLeft+viewport.clientWidth*.8)};
 $('counterBtn').onclick=()=>moveAction(()=>session.toCounter(),'Come to the counter!');
 $('seatBtn').onclick=()=>moveAction(()=>session.sit(),'Have a seat!');
 $('sleepBtn').onclick=()=>moveAction(()=>session.nap(),'Shhh… sleepy customer!');
@@ -275,7 +325,7 @@ $('serveBtn').onclick=()=>act(()=>{
 });
 $('nextBtn').onclick=()=>{try{
  const target=session.beginLeave();announce('See you again!');
- persist();moveTo(target,()=>{session.finishLeave();announce('A new visitor has arrived!');requestAnimationFrame(arrive)});
+ persist();moveTo(target,()=>{session.finishLeave();announce('The line moves forward!');requestAnimationFrame(arrive)},'entrance');
 }catch(e){announce(e.message)}};
 $('bowl').ondragover=e=>e.preventDefault();
 $('bowl').ondrop=e=>{e.preventDefault();act(()=>session.addIngredient(e.dataTransfer.getData('text/plain')))};
@@ -301,6 +351,7 @@ function celebrate(){
 window.addEventListener('pagehide',persist);
 setInterval(updateOven,140);
 render();persist();
+requestAnimationFrame(()=>followCamera(visualPos.x));
 if(session.phase==='arriving')requestAnimationFrame(arrive);
 else if(session.phase==='finished')announce('Your customer is ready to leave when you are!');
 else if(session.phase==='prepared')announce('Your surprise dish is ready!');
