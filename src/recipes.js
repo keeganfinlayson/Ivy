@@ -37,6 +37,7 @@ export function resolveFood(ingredients,method){
  if(!Array.isArray(ingredients)||ingredients.length<1||ingredients.length>4)throw Error('Choose 1–4 ingredients');
  const valid=new Set(INGREDIENTS.map(i=>i.id));if(ingredients.some(x=>!valid.has(x)))throw Error('Unknown ingredient');
  const counts=new Map();for(const i of ingredients)counts.set(i,(counts.get(i)||0)+1);
+ if(counts.has('dragonfruit'))return {id:method==='bake'?'dragonfruit-cake':'dragonfruit-delight',name:method==='bake'?'Dragonfruit Magic Cake':'Dragonfruit Delight',emoji:method==='bake'?'🎂':'🍧',quality:5,group:'special'};
  const matches=RECIPE_CATALOG.filter(r=>r.method===method&&r.needs.every(x=>counts.has(x)))
  .map(r=>({r,extra:ingredients.length-r.needs.length})).filter(x=>x.extra>=0)
  .sort((a,b)=>a.extra-b.extra||b.r.needs.length-a.r.needs.length);
