@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f8cddd"><title>Mochi Munch — v0.15</title>
+<meta name="theme-color" content="#f8cddd"><title>Mochi Munch — v0.16</title>
 <style>
 :root{font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;color:#634657;background:#fff5f8}
 *{box-sizing:border-box}body{margin:0;min-height:100vh}
@@ -171,8 +171,41 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
 @keyframes guest-sway{to{transform:rotate(3deg) translateY(-3px)}}
 @media(max-width:690px){.animal{width:94px;height:117px}.guest{width:65px;height:80px}.window{border-width:7px}.counter{border-width:4px;border-top-width:10px}}
 @media(prefers-reduced-motion:reduce){.animal.walk svg,.animal.walk .leg-left,.animal.walk .leg-right,.animal.walk .arm-left,.animal.walk .arm-right,.animal.walk .head,.animal.sleep svg,.animal.eat svg,.animal.eat .head,.animal.eat .arm-left,.animal.eat .arm-right,.guest svg{animation:none!important}}
+
+/* v0.16 wide, layered, horizontally scrollable café with a reserved customer line. */
+.scene-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0 10px;font-size:.88rem;color:#815b6c}
+.scene-controls button{padding:7px 12px;min-height:38px;flex-shrink:0}
+#sceneHint{text-align:center;line-height:1.25}
+.room-viewport{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#c8949f #fff1f2;overscroll-behavior-x:contain;border-radius:21px;touch-action:pan-x pan-y;scroll-behavior:auto}
+.room-viewport::-webkit-scrollbar{height:12px}
+.room-viewport::-webkit-scrollbar-track{background:#f9e0df;border-radius:11px}
+.room-viewport::-webkit-scrollbar-thumb{background:#d49e9d;border-radius:11px;border:2px solid #f9e0df}
+.room{width:1660px;min-width:1660px;max-width:none;height:500px;touch-action:auto;border-radius:22px}
+.room:after{z-index:0}
+.room:before{z-index:0}
+.door{left:4%;width:104px;height:39%;bottom:40%;z-index:2}
+.window{left:13%;width:250px;height:32%;top:6%}
+.shelf{left:34%;right:auto;width:auto;top:15%;font-size:28px}
+.pendant{right:18%}
+.bench{left:19%;width:210px;height:13%;bottom:28%;z-index:2}
+.counter{right:3%;width:18%;height:26%;bottom:6%;z-index:5}
+.floor-runner{position:absolute;left:33%;top:76%;width:47%;height:17%;z-index:1;border:3px solid #f7e5ca90;border-radius:90px 22px 20px 90px;background:linear-gradient(180deg,#fff3dfb7,#f4dfcf8a);box-shadow:inset 0 2px 0 #fff9e3bf,0 2px 13px #b883713a;pointer-events:none}
+.floor-runner:after{content:"";position:absolute;inset:45% 15px 45% 20px;border-top:3px dotted #b68c7b99}
+.queue-marker{position:absolute;left:41%;top:93%;width:32%;font-size:11px;font-weight:800;letter-spacing:.12em;text-align:center;color:#aa7d71;z-index:2;pointer-events:none;opacity:.9}
+.background-details{position:absolute;inset:0 0 41%;z-index:1;pointer-events:none}
+.menu-board{position:absolute;right:6%;top:12%;width:220px;height:118px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;border:9px solid #bd877c;border-radius:14px;background:linear-gradient(135deg,#576e67,#3f5d58);box-shadow:0 9px 0 #a67970,0 15px 20px #876b6242;color:#fff1dd;text-align:center;transform:rotate(1.5deg)}
+.menu-board strong{letter-spacing:.1em;font-size:15px}.menu-board span{font-size:14px;font-style:italic}
+.back-shelf{position:absolute;left:50%;top:28%;width:265px;border-bottom:10px solid #bd8b75;border-radius:8px;text-align:center;font-size:35px;text-shadow:0 2px #fce6d6;box-shadow:0 10px 12px #987d6d28}
+.side-plant{position:absolute;left:30%;top:50%;font-size:59px;filter:drop-shadow(0 4px 1px #735b4924)}
+.guest-layer{z-index:3;pointer-events:none}.guest{position:absolute;left:12%;top:85.5%;width:94px;height:112px;transition:left .68s ease-in-out,top .68s ease-in-out;will-change:left,top;z-index:3}
+.guest:nth-child(1),.guest:nth-child(2),.guest:nth-child(3){left:var(--guest-x,50%);top:var(--guest-y,85.5%)}
+.animal{z-index:6;width:126px;height:152px}
+.hearts{left:76%}
+.wardrobe{position:relative;z-index:1}
+@media(max-width:690px){.room{height:500px;width:1660px;min-width:1660px}.animal{width:117px;height:144px}.guest{width:92px;height:110px}.room-viewport{border-radius:14px}.scene-controls{font-size:.75rem}.scene-controls button{font-size:.82rem;padding:6px 9px}.menu-board strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.guest{transition:none!important}}
 </style></head><body>
-<header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.15 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
+<header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.16 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
 <main>
 <nav class="tabs" aria-label="Game areas">
 <button id="navCafe" class="active">☕ Café</button>
@@ -186,7 +219,16 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
 <section id="cafeScreen">
 <div class="card">
 <div class="guestline" id="waiting">Waiting:</div>
-<div class="room" id="room" data-wallpaper="default">
+<div class="scene-controls">
+  <button id="panLeft" type="button" aria-label="Scroll toward the entrance">◀ Entrance</button>
+  <span id="sceneHint">Swipe or scroll to explore the café · The line leads to the counter</span>
+  <button id="panRight" type="button" aria-label="Scroll toward the counter">Counter ▶</button>
+ </div>
+ <div class="room-viewport" id="roomViewport" tabindex="0" aria-label="Scrollable café room, from entrance to counter">
+ <div class="room" id="room" data-wallpaper="default">
+  <div class="background-details" aria-hidden="true"><div class="menu-board"><strong>MOCHI MUNCH</strong><span>made with love ♡</span></div><div class="back-shelf">🪴　🫙　🍰　🫖</div><div class="side-plant">🌿</div></div>
+  <div class="floor-runner" aria-hidden="true"></div>
+  <div class="queue-marker" aria-hidden="true">WAIT HERE · FOLLOW THE PAWS</div>
  <div class="window" id="window"><div class="clouds"></div></div>
  <div class="door">ENTRY</div><button type="button" id="peekKitty" class="peek-kitty hidden" aria-label="Peekaboo Kitty">🐱</button><div class="bench"></div><div class="pendant"></div><div class="shelf">🪴 🫙</div>
  <div class="counter">COUNTER</div>
@@ -195,7 +237,7 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
  <div class="animal" id="animal"></div>
  <div class="cafe-food hidden" id="foodInCafe" aria-hidden="true"></div>
  <div class="reaction hidden" id="reaction" role="status"></div><div id="hearts" class="hearts hidden" aria-hidden="true">💗 💕 ✨</div>
-</div>
+ </div></div>
 <div id="cafeActions" class="actions">
 <button id="counterBtn">Call to counter</button>
 <button id="seatBtn">Sit down</button>
