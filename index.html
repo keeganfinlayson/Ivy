@@ -115,6 +115,10 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
 @keyframes mixloop{to{transform:translateY(-8px) rotate(28deg)}}
 .low-motion .peek-kitty,.low-motion .guest-1 svg,.low-motion .guest-2 svg{animation:none!important}
 @media(prefers-reduced-motion:reduce){.peek-kitty,.guest-1 svg,.guest-2 svg,.bowl.mixing .bowl-pieces span{animation:none!important}}
+.hearts{position:absolute;z-index:8;top:27%;left:58%;font-size:27px;animation:heartfloat 1.6s infinite ease-in-out;pointer-events:none}
+@keyframes heartfloat{0%{opacity:.4;transform:translateY(8px) scale(.9)}65%{opacity:1}100%{opacity:.25;transform:translateY(-22px) scale(1.13)}}
+.low-motion .hearts{animation:none}
+@media(prefers-reduced-motion:reduce){.hearts{animation:none!important}}
 </style></head><body>
 <header><div class="topline"><h1>🍓 Mochi Munch <span class="version">Version 0.14 · Development</span></h1><div class="treasury" id="coins">🪙 0</div></div></header>
 <main>
@@ -138,7 +142,7 @@ footer{text-align:center;color:#907785;font-size:.8rem;padding:12px}
  <div class="guest-layer" id="guestLayer"></div>
  <div class="animal" id="animal"></div>
  <div class="cafe-food hidden" id="foodInCafe" aria-hidden="true"></div>
- <div class="reaction hidden" id="reaction" role="status"></div>
+ <div class="reaction hidden" id="reaction" role="status"></div><div id="hearts" class="hearts hidden" aria-hidden="true">💗 💕 ✨</div>
 </div>
 <div id="cafeActions" class="actions">
 <button id="counterBtn">Call to counter</button>
