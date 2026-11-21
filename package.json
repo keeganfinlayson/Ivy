@@ -1,0 +1,9 @@
+{
+  "name": "mochi-munch",
+  "private": true,
+  "type": "module",
+  "version": "0.14.0",
+  "scripts": {
+    "test": "node --test tests/engine.test.mjs"
+  }
+}
