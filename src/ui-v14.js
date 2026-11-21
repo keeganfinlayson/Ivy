@@ -17,7 +17,7 @@ function readSave(){try{
 const session=new Restaurant(readSave());
 let settings={sound:false,reduce:false};try{settings={...settings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}}catch{}
 let view=session.scene==='kitchen'?'kitchen':'cafe',shopTab='ingredients',selectedDecor=null;
-let visualPos={...session.customer.position},animating=false,frame=null,flashTimeout=null,audio=null;
+let visualPos={...session.customer.position},animating=false,frame=null,flashTimeout=null,audio=null,peekHiddenAt=-1;
 const reduceMotion=()=>settings.reduce||OS_REDUCED;
 
 function announce(t){status.textContent=t}
@@ -84,6 +84,7 @@ function renderRoom(){
  const wall=session.wallpaper;
  room.dataset.wallpaper=wall;
  renderWeather();renderAnimal();renderDecor();
+ $('peekKitty').classList.toggle('hidden',session.served<2||session.served%4!==2||session.phase!=='waiting'||peekHiddenAt===session.served);
  const finished=session.phase==='finished';
  $('foodInCafe').classList.toggle('hidden',!finished);
  $('reaction').classList.toggle('hidden',!finished);
@@ -126,6 +127,9 @@ function renderKitchen(){
   grid.append(b);
  }
  $('selected').textContent=session.selected.length?session.selected.map(id=>{const i=INGREDIENTS.find(f=>f.id===id);return i.emoji+' '+i.name}).join(' + '):'Nothing in the bowl yet';
+ const pieces=$('bowlPieces');pieces.replaceChildren();
+ for(const id of session.selected){const item=INGREDIENTS.find(i=>i.id===id);if(!item)continue;const el=document.createElement('span');el.textContent=item.emoji;pieces.append(el)}
+ $('bowl').classList.toggle('mixing',session.cooking?.method==='mix');
  const cooking=session.cooking,ready=session.phase==='prepared';
  $('preparation').classList.toggle('hidden',!!cooking||ready);
  $('mixing').classList.toggle('hidden',cooking?.method!=='mix');
@@ -285,6 +289,7 @@ $('colorSelect').onchange=()=>act(()=>{
 $('doneBtn').onclick=()=>{view='cafe';announce('Your decorations are saved!');render();persist()};
 $('shopFromDecor').onclick=()=>{shopTab='decor';view='shop';render()};
 $('shopBackBtn').onclick=()=>{view=session.scene==='kitchen'?'kitchen':'cafe';render()};
+$('peekKitty').onclick=()=>{peekHiddenAt=session.served;announce('Peekaboo! The shy kitty ducked out of sight.');playSound(770);render()};
 $('soundBtn').onclick=()=>{settings.sound=!settings.sound;saveSettings();playSound(720);render()};
 $('motionBtn').onclick=()=>{settings.reduce=!settings.reduce;saveSettings();render()};
 function celebrate(){
