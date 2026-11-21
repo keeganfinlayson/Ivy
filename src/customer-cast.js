@@ -392,17 +392,19 @@ export const CUSTOMER_CAST=Object.freeze([
  }
 ].map(c=>Object.freeze(c)));
 export const CAST_BY_ID=Object.freeze(Object.fromEntries(CUSTOMER_CAST.map(c=>[c.id,c])));
-export const CAST_COLORS=Object.freeze({honey:'#E6B17D',cinnamon:'#BF8868',cream:'#F6E9D2',chestnut:'#986B58',rose:'#E8B7B0',charcoal:'#66616B',ginger:'#DDA16C',silver:'#BCC1CE',calico:'#F6E5D7',golden:'#F2CB79',chocolate:'#97715E',lavender:'#D9B8E8',mint:'#C6E9DD'});
+export const CAST_COLORS=Object.freeze({white:'#FFF9F0',honey:'#E6B17D',cinnamon:'#BF8868',cream:'#F6E9D2',chestnut:'#986B58',rose:'#E8B7B0',charcoal:'#66616B',ginger:'#DDA16C',silver:'#BCC1CE',calico:'#F6E5D7',golden:'#F2CB79',chocolate:'#97715E',lavender:'#D9B8E8',mint:'#C6E9DD'});
+export const COLOR_TASTES=Object.freeze({white:{fruit:2,baked:0},cream:{fruit:2,baked:0},silver:{fruit:2,baked:0},honey:{fruit:0,baked:2},cinnamon:{fruit:0,baked:2},chestnut:{fruit:0,baked:2},charcoal:{fruit:0,baked:2},ginger:{fruit:2,baked:0},rose:{fruit:2,baked:0},golden:{fruit:0,baked:2},chocolate:{fruit:0,baked:2},lavender:{fruit:2,baked:0},mint:{fruit:2,baked:0},calico:{fruit:1,baked:1}});
 const SPECIES_STYLE={cat:{fruit:1,baked:1},capybara:{fruit:1,baked:1},dog:{fruit:1,baked:1},otter:{fruit:1,baked:1},giraffe:{fruit:1,baked:1}};
 const hash=s=>{let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 export function tasteProfile(c){
  const profile=CAST_BY_ID[c?.profileId]||c;
  if(!profile)return {fruit:0,baked:0,sweet:0,adventurous:0,favoriteIngredient:null};
  const style=SPECIES_STYLE[profile.species]||{fruit:1,baked:1};
- // Species contributes lightly; no animal species or coat color predetermines a taste.
- // Each individual has their own preference, temperament and favorite ingredient.
- const fruit=style.fruit+(profile.favoriteStyle==='fruit'?3:0)+(profile.temperament==='playful'?1:0);
- const baked=style.baked+(profile.favoriteStyle==='baked'?3:0)+(profile.temperament==='cozy'?1:0);
+ // Color contributes the same modifier across species. Species, temperament,
+ // and individual favorites also contribute, so color is never a guarantee.
+ const color=COLOR_TASTES[profile.color]||{fruit:0,baked:0};
+ const fruit=style.fruit+color.fruit+(profile.favoriteStyle==='fruit'?3:0)+(profile.temperament==='playful'?1:0);
+ const baked=style.baked+color.baked+(profile.favoriteStyle==='baked'?3:0)+(profile.temperament==='cozy'?1:0);
  return {fruit,baked,sweet:profile.temperament==='gentle'?1:0,adventurous:['bold','curious'].includes(profile.temperament)?1:0,favoriteIngredient:profile.favoriteIngredient,signature:hash(profile.id+'|'+profile.color)%3};
 }
 export function assignProfile(c,random=Math.random){
