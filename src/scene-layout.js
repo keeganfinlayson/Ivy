@@ -1,9 +1,9 @@
 /* Mochi Munch v0.16: world layout, clear queue lane, and camera geometry. */
 export const WORLD_WIDTH=1660;
 export const LINE_SPOTS=Object.freeze([
- Object.freeze({x:.58,y:.855}),
- Object.freeze({x:.49,y:.855}),
- Object.freeze({x:.40,y:.855})
+ Object.freeze({x:.57,y:.855}),
+ Object.freeze({x:.47,y:.855}),
+ Object.freeze({x:.37,y:.855})
 ]);
 // The floor corridor is reserved for customers. Furniture is kept to its perimeter.
 export const LINE_CORRIDOR=Object.freeze({left:.32,right:.86,top:.675,bottom:.96});
@@ -49,7 +49,7 @@ export function routeFor(start,destination){
 }
 export function cameraPosition(worldX,worldWidth,viewportWidth){
  if(!Number.isFinite(worldWidth)||!Number.isFinite(viewportWidth)||worldWidth<=0||viewportWidth<=0)return 0;
- return clamp(worldX*worldWidth-viewportWidth*.49,0,Math.max(0,worldWidth-viewportWidth));
+ return clamp(worldX*worldWidth-viewportWidth*.56,0,Math.max(0,worldWidth-viewportWidth));
 }
 export function distanceAlongRoute(start,route,width,height){
  let d=0,prev=start;for(const point of route){d+=Math.hypot((point.x-prev.x)*width,(point.y-prev.y)*height);prev=point}
