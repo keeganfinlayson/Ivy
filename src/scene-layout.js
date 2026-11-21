@@ -9,7 +9,10 @@ export const LINE_SPOTS=Object.freeze([
 export const LINE_CORRIDOR=Object.freeze({left:.32,right:.86,top:.675,bottom:.96});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function isInLineCorridor(x,y){
- return x>=LINE_CORRIDOR.left&&x<=LINE_CORRIDOR.right&&y>=LINE_CORRIDOR.top&&y<=LINE_CORRIDOR.bottom;
+ const main=x>=LINE_CORRIDOR.left&&x<=LINE_CORRIDOR.right&&y>=LINE_CORRIDOR.top&&y<=LINE_CORRIDOR.bottom;
+ const entry=x>=.06&&x<.32&&y>=.63&&y<=.77;
+ const bench=x>=.17&&x<=.33&&y>=.79&&y<=.94;
+ return main||entry||bench;
 }
 export function safeFurniturePosition(x,y){
  if(!Number.isFinite(x)||!Number.isFinite(y))throw Error('Invalid furniture position');
@@ -18,10 +21,10 @@ export function safeFurniturePosition(x,y){
  if(isInLineCorridor(xx,yy)){
   const choices=[
    {x:xx,y:.62,cost:Math.abs(yy-.62)},
-   {x:.285,y:yy,cost:Math.abs(xx-.285)*1.4},
+   {x:.115,y:yy,cost:Math.abs(xx-.115)*1.4},
    {x:.905,y:yy,cost:Math.abs(xx-.905)*1.4}
-  ].sort((a,b)=>a.cost-b.cost);
-  xx=choices[0].x;yy=choices[0].y;
+  ].filter(p=>!isInLineCorridor(p.x,p.y)).sort((a,b)=>a.cost-b.cost);
+  xx=choices[0]?.x??.90;yy=choices[0]?.y??.60;
  }
  return {x:xx,y:yy};
 }
@@ -33,7 +36,7 @@ export function routeFor(start,destination){
   return [{x:.18,y:.69},{x:.645,y:.69},{x:.645,y:.855}];
  }
  if(destination==='bench'){
-  return [{x:start.x,y:.69},{x:.24,y:.69}];
+  return [{x:start.x,y:.69},{x:.24,y:.69},{x:.24,y:.82}];
  }
  if(destination==='counter'){
   if(start.x<.4||start.y<.75)return [{x:start.x,y:.69},{x:.73,y:.69},{x:.79,y:.855}];
