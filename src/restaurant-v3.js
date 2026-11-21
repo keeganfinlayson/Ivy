@@ -67,7 +67,7 @@ export class Restaurant{
  ovenReady(now=Date.now()){return this.cooking?.method==='bake'&&now-this.cooking.startedAt>=(this.cooking.duration||1800)}
  openOven(now=Date.now()){if(!this.ovenReady(now))throw Error('The oven is still baking');return this.completeCook()}
  checkCook(){if(this.scene!=='kitchen'||this.phase!=='counter'||this.cooking||!this.selected.length)throw Error('Choose ingredients before cooking')}
- completeCook(){const food=resolveFood(this.selected,this.cooking.method),stars=rateFood(food,this.customer.preference,this.customer.favoriteIngredients||[]);this.prepared={...food,stars,method:this.cooking.method,ingredients:[...this.selected]};this.cooking=null;this.phase='prepared';return this.prepared}
+ completeCook(){const food=resolveFood(this.selected,this.cooking.method),stars=rateFood({...food,ingredients:this.selected},this.customer.preference,this.customer.favoriteIngredients||[]);this.prepared={...food,stars,method:this.cooking.method,ingredients:[...this.selected]};this.cooking=null;this.phase='prepared';return this.prepared}
  bringFood(){if(this.phase!=='prepared'||!this.prepared)throw Error('Food is not ready');this.scene='cafe'}
  serve(){
   if(this.scene!=='cafe'||this.phase!=='prepared'||!this.prepared)throw Error('No food ready to serve');
