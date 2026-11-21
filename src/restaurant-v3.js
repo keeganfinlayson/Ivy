@@ -3,6 +3,7 @@ import {SHOP_CATALOG,ACHIEVEMENTS,FURNITURE_COLORS,SPECIES,dateKey,eventSpecies,
 import {safeFurniturePosition,LINE_SPOTS} from './scene-layout.js';
 import {Game,Customer,STATES,LOCATIONS} from './game-core.js';
 import {INGREDIENTS,REWARDS,resolveFood,rateFood} from './recipes.js';
+import {chooseProfile,PROFILE_BY_ID,tasteForProfile} from './guest-profiles.js';
 export const SAVE_KEY='mochi-munch-game';
 export const SESSION_VERSION=4;
 const validIngredients=new Set(INGREDIENTS.map(x=>x.id));
@@ -22,14 +23,20 @@ export class Restaurant{
   if(roll<.025)type='unicorn-cat';
   else if(roll<.13)type=eventSpecies(this.now(),this.random)||pool[Math.floor(this.random()*pool.length)];
   else type=pool[Math.floor(this.random()*pool.length)];
-  const c=this.game.addCustomer(type);c.rarity=SPECIES[type]?.rarity||'common';c.preference=this.random()<.5?'fruit':'baked';return c;
+  const c=this.game.addCustomer(type);c.rarity=SPECIES[type]?.rarity||'common';this.assignProfile(c);return c;
+ }
+ assignProfile(c,profile=null){
+  const p=profile||chooseProfile(c.species,this.random);
+  if(p){c.profileId=p.id;c.name=p.name;c.coat=p.coat;c.build=p.build;c.marking=p.marking;c.outfit=p.outfit;c.headwear=p.headwear;c.preference=tasteForProfile(p);c.favoriteIngredients=[...p.ingredients]}
+  else {c.preference='fruit'}
+  return c;
  }
  fillQueue(){while(this.queueIds.length<3)this.queueIds.push(this.createGuest().id)}
  startNext(){
   if(this.currentId)throw Error('Finish the current visit first');
   this.fillQueue();
   const now=this.now(),today=dateKey(now),inspectorDue=now.getDay()===5&&this.game.daily.lastInspection!==today;
-  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id;this.cameFromLine=false}
+  if(inspectorDue){const c=this.assignProfile(this.game.addCustomer('inspector-cat'));c.rarity='inspector';this.currentId=c.id;this.cameFromLine=false}
   else {this.cameFromLine=this.served>0;this.currentId=this.queueIds.shift()}
   this.fillQueue();
   const c=this.customer;c.position={...(this.cameFromLine?LINE_SPOTS[0]:LOCATIONS.entrance)};c.state=STATES.ENTERING;
@@ -60,7 +67,7 @@ export class Restaurant{
  ovenReady(now=Date.now()){return this.cooking?.method==='bake'&&now-this.cooking.startedAt>=(this.cooking.duration||1800)}
  openOven(now=Date.now()){if(!this.ovenReady(now))throw Error('The oven is still baking');return this.completeCook()}
  checkCook(){if(this.scene!=='kitchen'||this.phase!=='counter'||this.cooking||!this.selected.length)throw Error('Choose ingredients before cooking')}
- completeCook(){const food=resolveFood(this.selected,this.cooking.method),stars=rateFood(food,this.customer.preference);this.prepared={...food,stars,method:this.cooking.method,ingredients:[...this.selected]};this.cooking=null;this.phase='prepared';return this.prepared}
+ completeCook(){const food=resolveFood(this.selected,this.cooking.method),stars=rateFood(food,this.customer.preference,this.customer.favoriteIngredients||[]);this.prepared={...food,stars,method:this.cooking.method,ingredients:[...this.selected]};this.cooking=null;this.phase='prepared';return this.prepared}
  bringFood(){if(this.phase!=='prepared'||!this.prepared)throw Error('Food is not ready');this.scene='cafe'}
  serve(){
   if(this.scene!=='cafe'||this.phase!=='prepared'||!this.prepared)throw Error('No food ready to serve');
@@ -115,13 +122,13 @@ export class Restaurant{
  }
 
  serialize(){
-  const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference,rarity:c.rarity}]));
+  const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference,rarity:c.rarity,profileId:c.profileId,name:c.name,coat:c.coat,build:c.build,marking:c.marking,favoriteIngredients:c.favoriteIngredients}]));
   return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,cameFromLine:this.cameFromLine,pendingMove:this.pendingMove?{...this.pendingMove}:null};
  }
  restore(raw){try{
   if(!raw||![2,3,4].includes(raw.version)||!raw.game||!Array.isArray(raw.game.customers))return false;
   const customers=new Map();
-  for(const data of raw.game.customers){if(!data||!validStates.has(data.state)||!data.id||customers.has(data.id))return false;const c=new Customer(data);c.preference=raw.details?.[c.id]?.preference==='baked'?'baked':'fruit';c.rarity=raw.details?.[c.id]?.rarity||SPECIES[c.species]?.rarity||'common';customers.set(c.id,c)}
+  for(const data of raw.game.customers){if(!data||!validStates.has(data.state)||!data.id||customers.has(data.id))return false;const c=new Customer(data);const d=raw.details?.[c.id]||{};const p=PROFILE_BY_ID[d.profileId]||chooseProfile(c.species,()=>.5);this.assignProfile(c,p);c.preference=d.preference==='baked'?'baked':d.preference==='fruit'?'fruit':c.preference;c.rarity=d.rarity||SPECIES[c.species]?.rarity||'common';customers.set(c.id,c)}
   if(!customers.has(raw.currentId)||!Array.isArray(raw.queueIds)||raw.queueIds.some(id=>!customers.has(id)||id===raw.currentId))return false;
   this.game.customers=customers;this.game.coins=clampInt(raw.game.coins);this.game.nextId=clampInt(raw.game.nextId,1);
   const unlock=raw.game.unlocked||{};
