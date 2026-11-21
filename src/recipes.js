@@ -49,12 +49,18 @@ export function resolveFood(ingredients,method){
 export function rateFood(food,preference,favoriteIngredients=[]){
  if(food.group==='special')return 5;
  let n=food.quality;
- if(preference==='fruit'&&food.group==='fruit')n++;
- if(preference==='baked'&&food.group==='baked')n++;
- if(preference==='fruit'&&food.group==='baked')n--;
- if(preference==='baked'&&food.group==='fruit')n--;
- // A beloved ingredient can make an otherwise ordinary dish more appealing.
- // This bonus is small, so cooking method and overall dish quality still matter.
- if(Array.isArray(favoriteIngredients)&&favoriteIngredients.some(id=>food.ingredients?.includes(id)))n++;
+ if(preference&&typeof preference==='object'){
+  const fruit=preference.fruit||0,baked=preference.baked||0;
+  if(food.group==='fruit')n+=Math.max(-2,Math.min(2,Math.round((fruit-baked)/2)));
+  if(food.group==='baked')n+=Math.max(-2,Math.min(2,Math.round((baked-fruit)/2)));
+  if(preference.favoriteIngredient&&food.ingredients?.includes(preference.favoriteIngredient))n++;
+  if(preference.sweet&&food.ingredients?.includes('sugar'))n++;
+ }else{
+  if(preference==='fruit'&&food.group==='fruit')n++;
+  if(preference==='baked'&&food.group==='baked')n++;
+  if(preference==='fruit'&&food.group==='baked')n--;
+  if(preference==='baked'&&food.group==='fruit')n--;
+  if(Array.isArray(favoriteIngredients)&&favoriteIngredients.some(id=>food.ingredients?.includes(id)))n++;
+ }
  return Math.max(1,Math.min(5,n));
 }
