@@ -1,12 +1,12 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mochi Munch — Regression Tests</title>
 <style>body{font:16px system-ui;max-width:820px;padding:16px;margin:25px auto;background:#fff5f9;color:#604554}main{background:white;border:3px solid #dfb1c5;border-radius:18px;padding:20px}pre{white-space:pre-wrap;overflow-wrap:break-word;line-height:1.55;padding:17px;background:#fff5f9;border-radius:14px}.good{color:#206545}.bad{color:#a42343}button{border:2px solid #d59db4;border-radius:12px;background:#ffe3ed;font:inherit;padding:10px 14px;cursor:pointer}</style>
-</head><body><main><h1>Mochi Munch — Mechanics Checks</h1><p>Version 0.14 test page. These checks use a separate game instance and do not affect your saved restaurant.</p><p id="progress">Running checks…</p><pre id="output">Loading…</pre><p id="modules">Checking game-engine files…</p><button id="repeat">Run checks again</button><p><a href="../">Return to game</a></p></main>
+</head><body><main><h1>Mochi Munch — Mechanics Checks</h1><p>Version 0.16 test page. These checks use a separate game instance and do not affect your saved restaurant.</p><p id="progress">Running checks…</p><pre id="output">Loading…</pre><p id="modules">Checking game-engine files…</p><button id="repeat">Run checks again</button><p><a href="../">Return to game</a></p></main>
 <script>window.addEventListener('error',e=>{document.getElementById('progress').textContent='Test JavaScript error';document.getElementById('output').textContent=e.message;document.getElementById('output').className='bad'})</script>
 <script>
 /* Mochi Munch gameplay core — independent of rendering */
 const SAVE_VERSION=1;
 const CUSTOMER_TYPES=Object.freeze({capybara:{id:'capybara',name:'Capybara',body:'round',rarity:'common'},cat:{id:'cat',name:'Calico Cat',body:'round',rarity:'common'},dog:{id:'dog',name:'Puppy',body:'round',rarity:'common'},otter:{id:'otter',name:'Otter',body:'round',rarity:'common'},giraffe:{id:'giraffe',name:'Giraffe',body:'tall',rarity:'common'},'unicorn-cat':{id:'unicorn-cat',name:'Unicorn Kitty',body:'round',rarity:'rare'},'inspector-cat':{id:'inspector-cat',name:'Inspector Cat',body:'round',rarity:'inspector'},turkey:{id:'turkey',name:'Turkey',body:'round',rarity:'seasonal'},ghost:{id:'ghost',name:'Ghost',body:'float',rarity:'seasonal'},'santa-capybara':{id:'santa-capybara',name:'Santa Capybara',body:'round',rarity:'seasonal'}});
-const LOCATIONS=Object.freeze({entrance:{x:.13,y:.75},waiting:{x:.27,y:.77},bench:{x:.29,y:.72},counter:{x:.72,y:.78}});
+const LOCATIONS=Object.freeze({entrance:{x:.09,y:.69},waiting:{x:.645,y:.855},bench:{x:.24,y:.82},counter:{x:.79,y:.855}});
 const STATES=Object.freeze({ENTERING:'entering',WAITING:'waiting',WALKING:'walking',SEATED:'seated',SLEEPING:'sleeping',AT_COUNTER:'at_counter',IN_KITCHEN:'in_kitchen',EATING:'eating',LEAVING:'leaving'});
 const allowed={entering:['walking'],waiting:['walking','seated','sleeping'],walking:['waiting','seated','sleeping','at_counter','leaving'],seated:['walking','sleeping'],sleeping:['walking','seated'],at_counter:['walking','in_kitchen','eating'],in_kitchen:['at_counter','eating'],eating:['leaving','at_counter'],leaving:[]};
 class EventBus{constructor(){this.listeners=new Map()}on(name,fn){if(!this.listeners.has(name))this.listeners.set(name,new Set());this.listeners.get(name).add(fn);return()=>this.listeners.get(name)?.delete(fn)}emit(name,data){for(const fn of this.listeners.get(name)||[])fn(data)}}
@@ -130,19 +130,78 @@ function eventSpecies(date=new Date(),random=Math.random){
 }
 function guestLabel(c){return SPECIES[c?.species]?.name||'Guest'}
 
+/* Mochi Munch v0.16: world layout, clear queue lane, and camera geometry. */
+const WORLD_WIDTH=1660;
+const LINE_SPOTS=Object.freeze([
+ Object.freeze({x:.58,y:.855}),
+ Object.freeze({x:.49,y:.855}),
+ Object.freeze({x:.40,y:.855})
+]);
+// The floor corridor is reserved for customers. Furniture is kept to its perimeter.
+const LINE_CORRIDOR=Object.freeze({left:.32,right:.86,top:.675,bottom:.96});
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function isInLineCorridor(x,y){
+ const main=x>=LINE_CORRIDOR.left&&x<=LINE_CORRIDOR.right&&y>=LINE_CORRIDOR.top&&y<=LINE_CORRIDOR.bottom;
+ const entry=x>=.06&&x<.32&&y>=.63&&y<=.77;
+ const bench=x>=.17&&x<=.33&&y>=.79&&y<=.94;
+ return main||entry||bench;
+}
+function safeFurniturePosition(x,y){
+ if(!Number.isFinite(x)||!Number.isFinite(y))throw Error('Invalid furniture position');
+ let xx=clamp(x,.06,.94), yy=clamp(y,.37,.92);
+ // Keep the furniture away from both the standing line and its walking corridor.
+ if(isInLineCorridor(xx,yy)){
+  const choices=[
+   {x:xx,y:.62,cost:Math.abs(yy-.62)},
+   {x:.115,y:yy,cost:Math.abs(xx-.115)*1.4},
+   {x:.905,y:yy,cost:Math.abs(xx-.905)*1.4}
+  ].filter(p=>!isInLineCorridor(p.x,p.y)).sort((a,b)=>a.cost-b.cost);
+  xx=choices[0]?.x??.90;yy=choices[0]?.y??.60;
+ }
+ return {x:xx,y:yy};
+}
+function routeFor(start,destination){
+ // Customers walk along a corridor behind the line, rather than through standing guests.
+ if(destination==='waiting'){
+  // Following visits advance from the front of the existing line.
+  if(start.x>=.35&&start.y>=.78)return [{x:.645,y:.855}];
+  return [{x:.18,y:.69},{x:.645,y:.69},{x:.645,y:.855}];
+ }
+ if(destination==='bench'){
+  return [{x:start.x,y:.69},{x:.24,y:.69},{x:.24,y:.82}];
+ }
+ if(destination==='counter'){
+  if(start.x<.4||start.y<.75)return [{x:start.x,y:.69},{x:.73,y:.69},{x:.79,y:.855}];
+  return [{x:.79,y:.855}];
+ }
+ if(destination==='entrance'){
+  return [{x:.79,y:.69},{x:.18,y:.69},{x:.09,y:.69}];
+ }
+ return [];
+}
+function cameraPosition(worldX,worldWidth,viewportWidth){
+ if(!Number.isFinite(worldWidth)||!Number.isFinite(viewportWidth)||worldWidth<=0||viewportWidth<=0)return 0;
+ return clamp(worldX*worldWidth-viewportWidth*.49,0,Math.max(0,worldWidth-viewportWidth));
+}
+function distanceAlongRoute(start,route,width,height){
+ let d=0,prev=start;for(const point of route){d+=Math.hypot((point.x-prev.x)*width,(point.y-prev.y)*height);prev=point}
+ return d;
+}
+
 /* Mochi Munch restaurant session engine v3: shops, celebrations and guest events. */
 
 
 
+
 const SAVE_KEY='mochi-munch-game';
-const SESSION_VERSION=3;
+const SESSION_VERSION=4;
 const validIngredients=new Set(INGREDIENTS.map(x=>x.id));
 const validPhases=new Set(['arriving','waiting','moving','counter','prepared','finished','leaving']);
 const validStates=new Set(Object.values(STATES));
 function clampInt(v,def=0){return Number.isSafeInteger(v)&&v>=0?v:def}
 class Restaurant{
  constructor(saved=null,{random=Math.random}={}){
-   this.random=random;this.now=()=>new Date();this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;this.wallpaper='default';this.lastBonuses=[];
+   this.random=random;this.now=()=>new Date();this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;this.wallpaper='default';this.lastBonuses=[];this.cameFromLine=false;
    if(!saved||!this.restore(saved)){this.fillQueue();this.startNext()}
  }
  get customer(){return this.game.customers.get(this.currentId)||null}
@@ -160,10 +219,10 @@ class Restaurant{
   if(this.currentId)throw Error('Finish the current visit first');
   this.fillQueue();
   const now=this.now(),today=dateKey(now),inspectorDue=now.getDay()===5&&this.game.daily.lastInspection!==today;
-  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id}
-  else this.currentId=this.queueIds.shift();
+  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id;this.cameFromLine=false}
+  else {this.cameFromLine=this.served>0;this.currentId=this.queueIds.shift()}
   this.fillQueue();
-  const c=this.customer;c.position={...LOCATIONS.entrance};c.state=STATES.ENTERING;
+  const c=this.customer;c.position={...(this.cameFromLine?LINE_SPOTS[0]:LOCATIONS.entrance)};c.state=STATES.ENTERING;
   this.phase='arriving';this.scene='cafe';this.cooking=null;this.prepared=null;this.selected=[];this.lastRating=null;this.lastReward=0;this.lastBonuses=[];this.pendingMove=null;return c;
  }
  planMove(destination,arrivalState){
@@ -219,7 +278,11 @@ class Restaurant{
   if(this.game.coins<item.price)throw Error('You need '+(item.price-this.game.coins)+' more coins');
   this.game.awardCoins(-item.price,'shop purchase');bag.push(id);
   if(item.kind==='wallpaper')this.wallpaper=id;
-  if(item.kind==='furniture')this.game.decorations.push({id,x:.18+this.game.decorations.length*.16,y:.77,color:'pink'});
+  if(item.kind==='furniture'){
+   const count=this.game.decorations.length;
+   const safe=safeFurniturePosition(.16+(count%3)*.065,.51+Math.floor(count/3)*.11);
+   this.game.decorations.push({id,...safe,color:'pink'});
+  }
   return item;
  }
  setWallpaper(id){if(id!=='default'&&!this.game.unlocked.wallpaper.includes(id))throw Error('Buy this wallpaper first');this.wallpaper=id}
@@ -229,7 +292,8 @@ class Restaurant{
   if(!Number.isFinite(x)||!Number.isFinite(y))throw Error('Invalid furniture position');
   const item=this.game.decorations.find(d=>d.id===id);
   if(!item)throw Error('Furniture not found');
-  item.x=Math.max(.06,Math.min(.94,x));item.y=Math.max(.35,Math.min(.92,y));item.color=color;
+  const safe=safeFurniturePosition(x,y);
+  item.x=safe.x;item.y=safe.y;item.color=color;
   return item;
  }
  claimDaily(date=this.now()){
@@ -242,10 +306,10 @@ class Restaurant{
 
  serialize(){
   const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference,rarity:c.rarity}]));
-  return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,pendingMove:this.pendingMove?{...this.pendingMove}:null};
+  return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,cameFromLine:this.cameFromLine,pendingMove:this.pendingMove?{...this.pendingMove}:null};
  }
  restore(raw){try{
-  if(!raw||![2,3].includes(raw.version)||!raw.game||!Array.isArray(raw.game.customers))return false;
+  if(!raw||![2,3,4].includes(raw.version)||!raw.game||!Array.isArray(raw.game.customers))return false;
   const customers=new Map();
   for(const data of raw.game.customers){if(!data||!validStates.has(data.state)||!data.id||customers.has(data.id))return false;const c=new Customer(data);c.preference=raw.details?.[c.id]?.preference==='baked'?'baked':'fruit';c.rarity=raw.details?.[c.id]?.rarity||SPECIES[c.species]?.rarity||'common';customers.set(c.id,c)}
   if(!customers.has(raw.currentId)||!Array.isArray(raw.queueIds)||raw.queueIds.some(id=>!customers.has(id)||id===raw.currentId))return false;
@@ -259,26 +323,35 @@ class Restaurant{
    tools:(Array.isArray(unlock.tools)?unlock.tools:[]).filter(id=>itemById(id)?.kind==='tools')
   };
   this.game.achievements=Array.isArray(raw.game.achievements)?raw.game.achievements:[];
-  this.game.decorations=Array.isArray(raw.game.decorations)?raw.game.decorations.filter(d=>this.game.unlocked.furniture.includes(d.id)):[];
+  this.game.decorations=Array.isArray(raw.game.decorations)?raw.game.decorations.filter(d=>this.game.unlocked.furniture.includes(d.id)).map(d=>({...d,...safeFurniturePosition(d.x,d.y)})):[];
   this.game.daily=raw.game.daily||this.game.daily;
   this.currentId=raw.currentId;this.queueIds=[...new Set(raw.queueIds)];this.phase=validPhases.has(raw.phase)?raw.phase:'waiting';
   this.scene=raw.scene==='kitchen'?'kitchen':'cafe';this.selected=Array.isArray(raw.selected)?raw.selected.filter(x=>validIngredients.has(x)).slice(0,4):[];
   this.cooking=raw.cooking&&['mix','bake'].includes(raw.cooking.method)?{...raw.cooking}:null;
   this.prepared=raw.prepared&&Number.isInteger(raw.prepared.stars)?raw.prepared:null;
   this.served=clampInt(raw.served);this.lastRating=raw.lastRating||null;this.lastReward=Number.isInteger(raw.lastReward)?raw.lastReward:0;this.lastBonuses=Array.isArray(raw.lastBonuses)?raw.lastBonuses:[];this.wallpaper=this.game.unlocked.wallpaper.includes(raw.wallpaper)?raw.wallpaper:'default';
-  this.pendingMove=raw.pendingMove||null;
+  this.pendingMove=raw.pendingMove||null;this.cameFromLine=raw.version>=4&&!!raw.cameFromLine;
   // Resume interrupted movement at its starting location or complete it safely.
   if(this.phase==='moving'){const p=this.pendingMove;if(p&&LOCATIONS[p.destination]&&validStates.has(p.arrivalState)){this.game.arrive(this.currentId,LOCATIONS[p.destination],p.arrivalState);this.phase=p.arrivalState===STATES.AT_COUNTER?'counter':'waiting'}else{this.customer.state=STATES.WAITING;this.phase='waiting'}this.pendingMove=null}
   if(this.phase==='leaving'){this.game.customers.delete(this.currentId);this.currentId=null;this.startNext()}
   if(this.phase==='finished')this.customer.state=STATES.EATING;
   if(this.phase==='prepared'&&!this.prepared){this.phase='counter';this.scene='kitchen'}
   if(this.phase==='counter'||this.phase==='prepared')this.customer.state=STATES.AT_COUNTER;
-  if(this.phase==='arriving'){this.customer.state=STATES.ENTERING;this.customer.position={...LOCATIONS.entrance}}
+  if(this.phase==='arriving'){this.customer.state=STATES.ENTERING;this.customer.position={...(this.cameFromLine?LINE_SPOTS[0]:LOCATIONS.entrance)}}
+  // Old saved positions belong to the earlier single-screen room.
+  // Reposition the same guest in the new wide room without resetting their progress.
+  if(raw.version<4&&this.customer){
+   if(['counter','prepared','finished'].includes(this.phase))this.customer.position={...LOCATIONS.counter};
+   else if(this.phase==='waiting'){
+    const state=this.customer.state;
+    this.customer.position={...(state===STATES.SEATED||state===STATES.SLEEPING?LOCATIONS.bench:LOCATIONS.waiting)};
+   }
+  }
   this.fillQueue();return true
  }catch{return false}}
 }
 function convertLegacy(old){if(!old||old.version!==1||!old.game)return null;
- const state={version:SESSION_VERSION,game:old.game,details:Object.fromEntries(Object.entries(old.preferences||{}).map(([id,preference])=>[id,{preference}])),currentId:old.current,queueIds:old.queue||[],phase:old.phase||'waiting',scene:'cafe',selected:old.selected||[],cooking:null,prepared:old.prepared||null,served:old.served||0,lastRating:null,lastReward:0,pendingMove:null};
+ const state={version:3,game:old.game,details:Object.fromEntries(Object.entries(old.preferences||{}).map(([id,preference])=>[id,{preference}])),currentId:old.current,queueIds:old.queue||[],phase:old.phase||'waiting',scene:'cafe',selected:old.selected||[],cooking:null,prepared:old.prepared||null,served:old.served||0,lastRating:null,lastReward:0,pendingMove:null};
  if(state.phase==='finished')state.lastRating=state.prepared?.stars||null;
  return state;
 }
@@ -297,6 +370,7 @@ const oval=(x,y,rx,ry,fill)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+r
 function characterSVG(c,expression='idle'){
  const type=palette[c.species]?c.species:'capybara',cat=['cat','unicorn-cat','inspector-cat'].includes(type);
  const [fur,accent]=safeColor(type);
+ const shade={cat:'#f1e1d7',capybara:'#c18b64',dog:'#d5ad81',otter:'#986c53',giraffe:'#e3ad60','unicorn-cat':'#e9d6f0','inspector-cat':'#f1e1d7',turkey:'#a96d58',ghost:'#e4ebf7','santa-capybara':'#c18b64'}[type];
  const sleep=expression==='sleep',love=expression==='love',disgust=expression==='yuck',joy=expression==='happy';
  const eye=sleep?'<path d="M33 61 Q41 67 49 61 M71 61 Q79 67 87 61" fill="none" stroke="#594037" stroke-width="3" stroke-linecap="round"/>':love?'<path d="M34 63 Q39 52 45 62 Q51 52 54 63 L44 74 Z M69 63 Q74 52 80 62 Q86 52 89 63 L79 74 Z" fill="#e885a8" stroke="none"/>':oval(41,62,4,4,'#372b29')+oval(79,62,4,4,'#372b29');
  const mouth=disgust?'<path d="M51 90 Q60 78 69 90" fill="none" stroke="#68463d" stroke-width="3"/>':joy||love?'<path d="M49 82 Q60 99 71 82 Q60 90 49 82" fill="#9c5963" stroke="#704b43" stroke-width="2"/>':'<path d="M52 82 Q60 90 68 82" fill="none" stroke="#704b43" stroke-width="2"/>';
@@ -330,15 +404,14 @@ function characterSVG(c,expression='idle'){
   faceExtra=oval(60,80,27,17,'#f6ddc4')+oval(60,74,6,4,'#65473d');
  }
  if(type==='santa-capybara')headExtra='<path d="M27 33 Q50 -9 86 3 L101 25 L89 32 Z" fill="#d85b68" stroke="#a63f54" stroke-width="2"/>'+oval(103,25,11,11,'#fff')+'<rect x="25" y="27" width="69" height="10" rx="5" fill="#fff"/>';
- const arms='<g class="arms">'+oval(23,104,11,22,fur)+oval(97,104,11,22,fur)+'</g>';
+ const arms='<g class="arms"><g class="arm arm-left" style="transform-origin:28px 100px">'+oval(23,104,11,22,fur)+oval(23,119,9,7,shade)+'</g><g class="arm arm-right" style="transform-origin:92px 100px">'+oval(97,104,11,22,fur)+oval(97,119,9,7,shade)+'</g></g>';
  const scarf=c.outfit==='scarf'?'<path d="M27 96 Q60 110 92 95 L87 108 Q60 123 33 108 Z" fill="#ec96b1"/><path d="M80 106 L99 129 L87 132 L72 114" fill="#e98aab"/>':'';
  const apron=c.outfit==='apron'?'<path d="M42 98 L78 98 L87 132 Q60 143 33 132 Z" fill="#f5ebee" stroke="#b08d99" stroke-width="2"/><path d="M50 119 Q60 126 70 119" fill="none" stroke="#cf8ba1" stroke-width="3"/>':'';
  const hat=c.headwear==='chef'?'<path d="M31 32 Q16 12 37 8 Q52 -5 62 7 Q82 -5 91 12 Q104 29 86 33 Z" fill="#fff" stroke="#cbbbc5" stroke-width="2"/><rect x="30" y="27" width="61" height="11" rx="4" fill="#fff0f7" stroke="#cbbbc5" stroke-width="2"/>':'';
  const bow=c.headwear==='bow'?'<path d="M89 32 Q112 15 111 39 Q110 52 89 42 Q70 56 72 37 Q75 26 89 32 Z" fill="#ed9cb8" stroke="#b97694" stroke-width="2"/>':'';
  const inspector=type==='inspector-cat'?'<path d="M57 97 L65 97 L68 116 L60 125 L53 116 Z" fill="#536579"/><circle cx="81" cy="65" r="12" fill="none" stroke="#8e7a56" stroke-width="3"/><path d="M93 64 L101 72" stroke="#8e7a56" stroke-width="2"/>':'';
- return '<svg viewBox="0 0 120 145" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+type+'"><g stroke="#745248" stroke-linejoin="round" stroke-width="2.5">'+behind+'<g class="legs">'+oval(40,128,13,17,fur)+oval(80,128,13,17,fur)+'</g>'+oval(60,102,38,39,fur)+bodyExtra+arms+ears+oval(60,62,48,43,fur)+faceExtra+eye+mouth+headExtra+inspector+scarf+apron+hat+bow+'</g></svg>';
+ return '<svg viewBox="0 -12 120 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+type+'"><g stroke="#745248" stroke-linejoin="round" stroke-width="2.5">'+behind+'<g class="legs"><g class="leg leg-left" style="transform-origin:40px 121px">'+oval(40,128,13,17,fur)+oval(39,140,12,5,shade)+'</g><g class="leg leg-right" style="transform-origin:80px 121px">'+oval(80,128,13,17,fur)+oval(81,140,12,5,shade)+'</g></g>'+oval(60,105,38,38,shade)+oval(60,100,37,38,fur)+bodyExtra+arms+'<g class="head" style="transform-origin:60px 89px">'+ears+oval(60,65,48,43,shade)+oval(60,61,47,42,fur)+faceExtra+'<ellipse cx="32" cy="76" rx="10" ry="5" fill="#ef9fa4" opacity=".36" stroke="none"/><ellipse cx="88" cy="76" rx="10" ry="5" fill="#ef9fa4" opacity=".36" stroke="none"/>'+eye+mouth+headExtra+'</g>'+inspector+scarf+apron+hat+bow+'</g></svg>';
 }
-
 
 const checks=[];
 function test(title,fn){try{fn();checks.push({title,pass:true})}catch(e){checks.push({title,pass:false,error:e.message})}}
@@ -456,11 +529,44 @@ test('Version-two saved restaurants migrate without losing coins',()=>{
  const r=new Restaurant();r.game.coins=137;const old=r.serialize();old.version=2;delete old.wallpaper;const copy=new Restaurant(old);
  ensure(copy.game.coins===137,'old save lost coins')
 });
+
+test('A visible queue advances one person after each meal',()=>{
+ const r=new Restaurant(null,{random:()=>.8});const front=r.queueIds[0];
+ arrive(r);counter(r);mixed(r,['strawberry','milk']);r.serve();r.beginLeave();r.finishLeave();
+ ensure(r.currentId===front,'previous queue front was not promoted');
+ ensure(r.cameFromLine&&r.customer.position.x===LINE_SPOTS[0].x,'next customer started at wrong place');
+ arrive(r);ensure(r.customer.position.x===LOCATIONS.waiting.x,'next guest failed to step forward')
+});
+test('Entry, queue and bench routes remain unobstructed',()=>{
+ for(const p of [[.6,.85],[.45,.70],[.20,.70],[.24,.84]]){
+  ensure(isInLineCorridor(...p),'missing reserved route');
+  const safe=safeFurniturePosition(...p);
+  ensure(!isInLineCorridor(safe.x,safe.y),'furniture can block the route');
+ }
+ const arrival=routeFor(LOCATIONS.entrance,'waiting'),exit=routeFor(LOCATIONS.counter,'entrance');
+ ensure(arrival.length===3&&arrival.at(-1).x===LOCATIONS.waiting.x,'wrong arrival path');
+ ensure(exit.length===3,'wrong exit path')
+});
+test('Wide-scene camera clamps to the scrollable area',()=>{
+ ensure(cameraPosition(.01,1660,800)===0,'left overflow');
+ ensure(cameraPosition(.99,1660,800)<=860,'right overflow');
+ ensure(cameraPosition(.74,1660,800)>0,'camera never follows customer')
+});
+test('Older saved positions migrate without losing coins',()=>{
+ const r=new Restaurant();r.game.coins=143;
+ const saved=r.serialize();saved.version=3;saved.phase='waiting';
+ saved.game.customers.find(c=>c.id===saved.currentId).position={x:.27,y:.77};
+ const restored=new Restaurant(saved);
+ ensure(restored.game.coins===143,'coins missing');
+ ensure(restored.customer.position.x===LOCATIONS.waiting.x,'wrong restored position')
+});
+
 const passed=checks.filter(t=>t.pass).length,failed=checks.filter(t=>!t.pass);
 const output=document.getElementById('output');output.className=failed.length?'bad':'good';
 output.textContent=passed+' of '+checks.length+' checks passed\n\n'+checks.map(x=>(x.pass?'PASS':'FAIL')+' — '+x.title+(x.error?'\n   '+x.error:'')).join('\n');
 document.getElementById('progress').textContent=failed.length?'Problems found — see below':'All engine checks complete';
 document.getElementById('repeat').onclick=()=>location.reload();
+
 
 </script>
 <script type="module">
