@@ -1,26 +1,17 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mochi Munch — Mechanics Test</title>
-<style>body{max-width:760px;margin:35px auto;padding:0 16px;font:16px system-ui;color:#553e4d;background:#fff2f7}main{background:#fff;border:3px solid #dfb0c3;border-radius:20px;padding:22px}pre{white-space:pre-wrap;overflow:auto;line-height:1.7;background:#faf4f7;border-radius:12px;padding:18px}h1{font-size:1.35rem}.ok{color:#23623d}.bad{color:#a32642}.muted{color:#826e78}button{font:inherit;border:2px solid #d49ab0;border-radius:10px;padding:9px 14px;background:#ffe1eb;cursor:pointer}</style>
-</head><body><main><h1>Mochi Munch — Gameplay Tests</h1>
-<p>This is the test page, not the game. It runs without downloading additional JavaScript files. Results should appear below automatically.</p>
-<p id="progress" class="muted">Starting checks…</p>
-<pre id="output" role="status">Loading tests…</pre>
-<p id="moduleStatus" class="muted">Checking published engine files…</p>
-<button id="repeat">Run tests again</button>
-<p><a href="../">Back to Mochi Munch</a></p></main>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mochi Munch — Regression Tests</title>
+<style>body{font:16px system-ui;max-width:820px;padding:16px;margin:25px auto;background:#fff5f9;color:#604554}main{background:white;border:3px solid #dfb1c5;border-radius:18px;padding:20px}pre{white-space:pre-wrap;overflow-wrap:break-word;line-height:1.55;padding:17px;background:#fff5f9;border-radius:14px}.good{color:#206545}.bad{color:#a42343}button{border:2px solid #d59db4;border-radius:12px;background:#ffe3ed;font:inherit;padding:10px 14px;cursor:pointer}</style>
+</head><body><main><h1>Mochi Munch — Mechanics Checks</h1><p>Version 0.14 test page. These checks use a separate game instance and do not affect your saved restaurant.</p><p id="progress">Running checks…</p><pre id="output">Loading…</pre><p id="modules">Checking game-engine files…</p><button id="repeat">Run checks again</button><p><a href="../">Return to game</a></p></main>
+<script>window.addEventListener('error',e=>{document.getElementById('progress').textContent='Test JavaScript error';document.getElementById('output').textContent=e.message;document.getElementById('output').className='bad'})</script>
 <script>
-window.addEventListener('error',e=>{const o=document.getElementById('output');o.className='bad';o.textContent='Test page JavaScript failed: '+e.message;document.getElementById('progress').textContent='ERROR';});
-window.addEventListener('unhandledrejection',e=>{const o=document.getElementById('moduleStatus');o.textContent='Engine file check failed: '+(e.reason?.message||e.reason);o.className='bad'});
-</script>
-<script>
-/* Mochi Munch gameplay core v0.7 — independent of rendering */
+/* Mochi Munch gameplay core — independent of rendering */
 const SAVE_VERSION=1;
-const CUSTOMER_TYPES=Object.freeze({capybara:{id:'capybara',name:'Capybara',body:'round',rarity:'common'},cat:{id:'cat',name:'Calico Cat',body:'round',rarity:'common'}});
+const CUSTOMER_TYPES=Object.freeze({capybara:{id:'capybara',name:'Capybara',body:'round',rarity:'common'},cat:{id:'cat',name:'Calico Cat',body:'round',rarity:'common'},dog:{id:'dog',name:'Puppy',body:'round',rarity:'common'},otter:{id:'otter',name:'Otter',body:'round',rarity:'common'},giraffe:{id:'giraffe',name:'Giraffe',body:'tall',rarity:'common'},'unicorn-cat':{id:'unicorn-cat',name:'Unicorn Kitty',body:'round',rarity:'rare'},'inspector-cat':{id:'inspector-cat',name:'Inspector Cat',body:'round',rarity:'inspector'},turkey:{id:'turkey',name:'Turkey',body:'round',rarity:'seasonal'},ghost:{id:'ghost',name:'Ghost',body:'float',rarity:'seasonal'},'santa-capybara':{id:'santa-capybara',name:'Santa Capybara',body:'round',rarity:'seasonal'}});
 const LOCATIONS=Object.freeze({entrance:{x:.13,y:.75},waiting:{x:.27,y:.77},bench:{x:.29,y:.72},counter:{x:.72,y:.78}});
 const STATES=Object.freeze({ENTERING:'entering',WAITING:'waiting',WALKING:'walking',SEATED:'seated',SLEEPING:'sleeping',AT_COUNTER:'at_counter',IN_KITCHEN:'in_kitchen',EATING:'eating',LEAVING:'leaving'});
 const allowed={entering:['walking'],waiting:['walking','seated','sleeping'],walking:['waiting','seated','sleeping','at_counter','leaving'],seated:['walking','sleeping'],sleeping:['walking','seated'],at_counter:['walking','in_kitchen','eating'],in_kitchen:['at_counter','eating'],eating:['leaving','at_counter'],leaving:[]};
 class EventBus{constructor(){this.listeners=new Map()}on(name,fn){if(!this.listeners.has(name))this.listeners.set(name,new Set());this.listeners.get(name).add(fn);return()=>this.listeners.get(name)?.delete(fn)}emit(name,data){for(const fn of this.listeners.get(name)||[])fn(data)}}
 class Customer{constructor({id,species='capybara',outfit='none',headwear='none',position=LOCATIONS.entrance,state=STATES.ENTERING}={}){if(!CUSTOMER_TYPES[species])throw Error('Unknown species');this.id=id||('customer-'+Date.now());this.species=species;this.outfit=outfit;this.headwear=headwear;this.position={...position};this.state=state}transition(next){if(!allowed[this.state]?.includes(next))throw Error('Invalid customer transition: '+this.state+' → '+next);this.state=next}serialize(){return{id:this.id,species:this.species,outfit:this.outfit,headwear:this.headwear,position:{...this.position},state:this.state}}}
-class Game{constructor(){this.events=new EventBus();this.customers=new Map();this.coins=0;this.unlocked={ingredients:['strawberry','blueberry','banana','flour','sugar','milk'],furniture:[],tools:[]};this.achievements=[];this.decorations=[];this.daily={lastGift:null,lastInspection:null};this.nextId=1}
+class Game{constructor(){this.events=new EventBus();this.customers=new Map();this.coins=0;this.unlocked={ingredients:['strawberry','blueberry','banana','flour','sugar','milk'],customers:[],furniture:[],wallpaper:[],tools:[]};this.achievements=[];this.decorations=[];this.daily={lastGift:null,lastInspection:null};this.nextId=1}
 addCustomer(species='capybara'){const c=new Customer({id:'customer-'+this.nextId++,species});this.customers.set(c.id,c);this.events.emit('customer:added',c);return c}
 moveCustomer(id,destination,arrivalState){const c=this.customers.get(id);if(!c||!LOCATIONS[destination])return false;if(c.state!==STATES.WALKING)c.transition(STATES.WALKING);this.events.emit('customer:moving',{customer:c,destination:LOCATIONS[destination],arrivalState});return true}
 arrive(id,position,state){const c=this.customers.get(id);if(!c)return;c.position={...position};c.transition(state);this.events.emit('customer:arrived',c)}
@@ -37,7 +28,10 @@ const INGREDIENTS=Object.freeze([
  {id:'banana',name:'Banana',emoji:'🍌'},
  {id:'flour',name:'Flour',emoji:'🌾'},
  {id:'sugar',name:'Sugar',emoji:'🍬'},
- {id:'milk',name:'Milk',emoji:'🥛'}
+ {id:'milk',name:'Milk',emoji:'🥛'},
+ {id:'mango',name:'Mango',emoji:'🥭'},
+ {id:'starfruit',name:'Star Fruit',emoji:'⭐'},
+ {id:'dragonfruit',name:'Dragon Fruit',emoji:'🐉'}
 ]);
 const REWARDS=Object.freeze({1:1,2:5,3:10,4:15,5:20});
 const dishes=[
@@ -51,7 +45,13 @@ const dishes=[
  {id:'blueberry-muffin',name:'Blueberry Muffin',emoji:'🧁',method:'bake',needs:['blueberry','flour','milk'],quality:5,group:'baked'},
  {id:'banana-bread',name:'Banana Bread',emoji:'🍞',method:'bake',needs:['banana','flour','milk'],quality:5,group:'baked'},
  {id:'strawberry-cake',name:'Strawberry Cake',emoji:'🍰',method:'bake',needs:['flour','strawberry','sugar'],quality:5,group:'baked'},
- {id:'sugar-cookie',name:'Sugar Cookie',emoji:'🍪',method:'bake',needs:['flour','sugar'],quality:4,group:'baked'}
+ {id:'sugar-cookie',name:'Sugar Cookie',emoji:'🍪',method:'bake',needs:['flour','sugar'],quality:4,group:'baked'},
+ {id:'mango-smoothie',name:'Mango Smoothie',emoji:'🥤',method:'mix',needs:['mango','milk'],quality:5,group:'fruit'},
+ {id:'mango-cake',name:'Mango Cake',emoji:'🍰',method:'bake',needs:['mango','flour','sugar'],quality:5,group:'baked'},
+ {id:'starfruit-sparkle',name:'Starry Fruit Surprise',emoji:'🍨',method:'mix',needs:['starfruit','milk'],quality:5,group:'fruit'},
+ {id:'starry-tart',name:'Starry Tart',emoji:'🥧',method:'bake',needs:['starfruit','flour'],quality:5,group:'baked'},
+ {id:'dragonfruit-delight',name:'Dragonfruit Delight',emoji:'🍧',method:'mix',needs:['dragonfruit'],quality:5,group:'special'},
+ {id:'dragonfruit-cake',name:'Dragonfruit Magic Cake',emoji:'🎂',method:'bake',needs:['dragonfruit'],quality:5,group:'special'}
 ];
 const RECIPE_CATALOG=Object.freeze(dishes.map(r=>Object.freeze({...r,needs:Object.freeze([...r.needs])})));
 function hashKey(value){let n=2166136261;for(let i=0;i<value.length;i++){n^=value.charCodeAt(i);n=Math.imul(n,16777619)}return n>>>0}
@@ -60,6 +60,7 @@ function resolveFood(ingredients,method){
  if(!Array.isArray(ingredients)||ingredients.length<1||ingredients.length>4)throw Error('Choose 1–4 ingredients');
  const valid=new Set(INGREDIENTS.map(i=>i.id));if(ingredients.some(x=>!valid.has(x)))throw Error('Unknown ingredient');
  const counts=new Map();for(const i of ingredients)counts.set(i,(counts.get(i)||0)+1);
+ if(counts.has('dragonfruit'))return {id:method==='bake'?'dragonfruit-cake':'dragonfruit-delight',name:method==='bake'?'Dragonfruit Magic Cake':'Dragonfruit Delight',emoji:method==='bake'?'🎂':'🍧',quality:5,group:'special'};
  const matches=RECIPE_CATALOG.filter(r=>r.method===method&&r.needs.every(x=>counts.has(x)))
  .map(r=>({r,extra:ingredients.length-r.needs.length})).filter(x=>x.extra>=0)
  .sort((a,b)=>a.extra-b.extra||b.r.needs.length-a.r.needs.length);
@@ -69,6 +70,7 @@ function resolveFood(ingredients,method){
  return{id:'mystery-'+hash.toString(36),name:names[hash%names.length],emoji:method==='bake'?'🥧':'🍮',quality:1+hash%3,group:method==='bake'?'baked':'other'};
 }
 function rateFood(food,preference){
+ if(food.group==='special')return 5;
  let n=food.quality;
  if(preference==='fruit'&&food.group==='fruit')n++;
  if(preference==='baked'&&food.group==='baked')n++;
@@ -77,25 +79,93 @@ function rateFood(food,preference){
  return Math.max(1,Math.min(5,n));
 }
 
-/* Mochi Munch restaurant session engine v2: no DOM dependencies. */
+/* Mochi Munch gameplay content: shop, guests and special events. */
+const SPECIES=Object.freeze({
+ cat:{name:'Calico Cat',emoji:'🐱',rarity:'common'},
+ capybara:{name:'Capybara',emoji:'🦫',rarity:'common'},
+ dog:{name:'Puppy',emoji:'🐶',rarity:'common'},
+ otter:{name:'Otter',emoji:'🦦',rarity:'common'},
+ giraffe:{name:'Giraffe',emoji:'🦒',rarity:'common'},
+ 'unicorn-cat':{name:'Unicorn Kitty',emoji:'🦄',rarity:'rare'},
+ 'inspector-cat':{name:'Friday Inspector Cat',emoji:'🐈',rarity:'inspector'},
+ turkey:{name:'Autumn Turkey',emoji:'🦃',rarity:'seasonal'},
+ ghost:{name:'Friendly Ghost',emoji:'👻',rarity:'seasonal'},
+ 'santa-capybara':{name:'Santa Capybara',emoji:'🎅',rarity:'seasonal'}
+});
+const SHOP_CATALOG=Object.freeze([
+ {id:'mango',kind:'ingredients',name:'Mango',emoji:'🥭',price:20,desc:'A bright, sweet fruit'},
+ {id:'starfruit',kind:'ingredients',name:'Star Fruit',emoji:'⭐',price:50,desc:'A fruity star'},
+ {id:'dragonfruit',kind:'ingredients',name:'Dragon Fruit',emoji:'🐉',price:1000,desc:'Everyone loves it!'},
+ {id:'dog',kind:'customers',name:'Puppy Invitation',emoji:'🐶',price:35,desc:'Puppies may visit'},
+ {id:'otter',kind:'customers',name:'Otter Invitation',emoji:'🦦',price:55,desc:'Otters may visit'},
+ {id:'giraffe',kind:'customers',name:'Giraffe Invitation',emoji:'🦒',price:85,desc:'Giraffes may visit'},
+ {id:'plush-cushion',kind:'furniture',name:'Plush Cushion',emoji:'🛋️',price:20,desc:'A cozy place to wait'},
+ {id:'potted-flower',kind:'furniture',name:'Potted Flowers',emoji:'🌷',price:30,desc:'Cheerful decorations'},
+ {id:'heart-rug',kind:'furniture',name:'Heart Rug',emoji:'💗',price:45,desc:'Brighten the floor'},
+ {id:'cloud-lamp',kind:'furniture',name:'Cloud Lamp',emoji:'☁️',price:60,desc:'A warm glow'},
+ {id:'mint-wallpaper',kind:'wallpaper',name:'Mint Wallpaper',emoji:'🍃',price:35,desc:'A new wall color'},
+ {id:'sky-wallpaper',kind:'wallpaper',name:'Sky Wallpaper',emoji:'☁️',price:35,desc:'A blue sky café'},
+ {id:'sunset-wallpaper',kind:'wallpaper',name:'Sunset Wallpaper',emoji:'🌅',price:55,desc:'Soft coral walls'},
+ {id:'fast-mixer',kind:'tools',name:'Fast Mixer',emoji:'🌀',price:120,desc:'Mixes three times faster'},
+ {id:'sparkly-oven',kind:'tools',name:'Sparkly Oven',emoji:'✨',price:175,desc:'Bakes twice as fast'}
+]);
+const FURNITURE_COLORS=Object.freeze([
+ {id:'pink',hex:'#f1a7be'}, {id:'mint',hex:'#9ed9bf'},
+ {id:'lavender',hex:'#bcb0e8'}, {id:'sunshine',hex:'#f5d68b'}
+]);
+const ACHIEVEMENTS=Object.freeze([
+ {id:'first-customer',name:'First Customer!',at:1},
+ {id:'five-customers',name:'Five Happy Visits!',at:5},
+ {id:'ten-customers',name:'Ten Dishes Served!',at:10},
+ {id:'fifty-customers',name:'Fifty Customer Party!',at:50}
+]);
+function itemById(id){return SHOP_CATALOG.find(x=>x.id===id)||null}
+function dateKey(date=new Date()){return String(date.getFullYear())+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
+function eventSpecies(date=new Date(),random=Math.random){
+ const m=date.getMonth();
+ if(m===9&&random()<.15)return 'ghost';
+ if(m===10&&random()<.15)return 'turkey';
+ if(m===11&&random()<.15)return 'santa-capybara';
+ return null;
+}
+function guestLabel(c){return SPECIES[c?.species]?.name||'Guest'}
+
+/* Mochi Munch restaurant session engine v3: shops, celebrations and guest events. */
+
 
 
 const SAVE_KEY='mochi-munch-game';
-const SESSION_VERSION=2;
+const SESSION_VERSION=3;
 const validIngredients=new Set(INGREDIENTS.map(x=>x.id));
 const validPhases=new Set(['arriving','waiting','moving','counter','prepared','finished','leaving']);
 const validStates=new Set(Object.values(STATES));
 function clampInt(v,def=0){return Number.isSafeInteger(v)&&v>=0?v:def}
 class Restaurant{
  constructor(saved=null,{random=Math.random}={}){
-   this.random=random;this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;
+   this.random=random;this.now=()=>new Date();this.game=new Game();this.currentId=null;this.queueIds=[];this.phase='arriving';this.scene='cafe';this.selected=[];this.cooking=null;this.prepared=null;this.served=0;this.lastReward=0;this.lastRating=null;this.pendingMove=null;this.wallpaper='default';this.lastBonuses=[];
    if(!saved||!this.restore(saved)){this.fillQueue();this.startNext()}
  }
  get customer(){return this.game.customers.get(this.currentId)||null}
  get queue(){return this.queueIds.map(id=>this.game.customers.get(id)).filter(Boolean)}
- createGuest(){const c=this.game.addCustomer(this.random()<.5?'cat':'capybara');c.preference=this.random()<.5?'fruit':'baked';return c}
+ createGuest(){
+  const pool=['cat','capybara',...this.game.unlocked.customers.filter(id=>['dog','otter','giraffe'].includes(id))];
+  const roll=this.random();let type;
+  if(roll<.025)type='unicorn-cat';
+  else if(roll<.13)type=eventSpecies(this.now(),this.random)||pool[Math.floor(this.random()*pool.length)];
+  else type=pool[Math.floor(this.random()*pool.length)];
+  const c=this.game.addCustomer(type);c.rarity=SPECIES[type]?.rarity||'common';c.preference=this.random()<.5?'fruit':'baked';return c;
+ }
  fillQueue(){while(this.queueIds.length<3)this.queueIds.push(this.createGuest().id)}
- startNext(){if(this.currentId)throw Error('Finish the current visit first');this.fillQueue();this.currentId=this.queueIds.shift();this.fillQueue();const c=this.customer;c.position={...LOCATIONS.entrance};this.phase='arriving';this.scene='cafe';this.cooking=null;this.prepared=null;this.selected=[];this.lastRating=null;this.lastReward=0;this.pendingMove=null;return c}
+ startNext(){
+  if(this.currentId)throw Error('Finish the current visit first');
+  this.fillQueue();
+  const now=this.now(),today=dateKey(now),inspectorDue=now.getDay()===5&&this.game.daily.lastInspection!==today;
+  if(inspectorDue){const c=this.game.addCustomer('inspector-cat');c.preference='baked';c.rarity='inspector';this.currentId=c.id}
+  else this.currentId=this.queueIds.shift();
+  this.fillQueue();
+  const c=this.customer;c.position={...LOCATIONS.entrance};c.state=STATES.ENTERING;
+  this.phase='arriving';this.scene='cafe';this.cooking=null;this.prepared=null;this.selected=[];this.lastRating=null;this.lastReward=0;this.lastBonuses=[];this.pendingMove=null;return c;
+ }
  planMove(destination,arrivalState){
    if(this.pendingMove)throw Error('Customer is already moving');
    if(!LOCATIONS[destination])throw Error('Unknown destination');
@@ -113,32 +183,89 @@ class Restaurant{
  toCounter(){return this.planMove('counter',STATES.AT_COUNTER)}
  openKitchen(){if(this.phase!=='counter')throw Error('Serve this customer before returning to the kitchen');this.scene='kitchen'}
  returnCafe(){this.scene='cafe'}
- addIngredient(id){if(this.scene!=='kitchen'||this.phase!=='counter'||this.cooking)throw Error('The bowl is not available');if(!validIngredients.has(id))throw Error('Unknown ingredient');if(this.selected.length>=4)throw Error('The bowl holds four ingredients');this.selected.push(id)}
+ addIngredient(id){if(this.scene!=='kitchen'||this.phase!=='counter'||this.cooking)throw Error('The bowl is not available');if(!validIngredients.has(id))throw Error('Unknown ingredient');if(!this.game.unlocked.ingredients.includes(id))throw Error('Unlock this ingredient in the shop');if(this.selected.length>=4)throw Error('The bowl holds four ingredients');this.selected.push(id)}
  clearIngredients(){if(this.cooking)throw Error('Finish cooking before emptying the bowl');this.selected=[]}
- startMix(){this.checkCook();this.cooking={method:'mix',stirs:0};return this.cooking}
- stir(){if(this.cooking?.method!=='mix')throw Error('Start mixing first');this.cooking.stirs++;if(this.cooking.stirs>=3)return this.completeCook();return null}
- startBake(now=Date.now()){this.checkCook();this.cooking={method:'bake',startedAt:now};return this.cooking}
- ovenReady(now=Date.now()){return this.cooking?.method==='bake'&&now-this.cooking.startedAt>=1800}
+ startMix(){this.checkCook();this.cooking={method:'mix',stirs:0,stirsNeeded:this.hasTool('fast-mixer')?1:3};return this.cooking}
+ stir(){if(this.cooking?.method!=='mix')throw Error('Start mixing first');this.cooking.stirs++;if(this.cooking.stirs>=(this.cooking.stirsNeeded||3))return this.completeCook();return null}
+ startBake(now=Date.now()){this.checkCook();this.cooking={method:'bake',startedAt:now,duration:this.hasTool('sparkly-oven')?900:1800};return this.cooking}
+ ovenReady(now=Date.now()){return this.cooking?.method==='bake'&&now-this.cooking.startedAt>=(this.cooking.duration||1800)}
  openOven(now=Date.now()){if(!this.ovenReady(now))throw Error('The oven is still baking');return this.completeCook()}
  checkCook(){if(this.scene!=='kitchen'||this.phase!=='counter'||this.cooking||!this.selected.length)throw Error('Choose ingredients before cooking')}
  completeCook(){const food=resolveFood(this.selected,this.cooking.method),stars=rateFood(food,this.customer.preference);this.prepared={...food,stars,method:this.cooking.method,ingredients:[...this.selected]};this.cooking=null;this.phase='prepared';return this.prepared}
  bringFood(){if(this.phase!=='prepared'||!this.prepared)throw Error('Food is not ready');this.scene='cafe'}
- serve(){if(this.scene!=='cafe'||this.phase!=='prepared'||!this.prepared)throw Error('No food ready to serve');const c=this.customer;c.transition(STATES.EATING);this.lastRating=this.prepared.stars;this.lastReward=REWARDS[this.lastRating];this.game.awardCoins(this.lastReward,'customer rating');this.served++;this.phase='finished';return {stars:this.lastRating,reward:this.lastReward,food:this.prepared}}
+ serve(){
+  if(this.scene!=='cafe'||this.phase!=='prepared'||!this.prepared)throw Error('No food ready to serve');
+  const c=this.customer;c.transition(STATES.EATING);this.lastRating=this.prepared.stars;
+  const rarity=c.rarity||SPECIES[c.species]?.rarity||'common';
+  this.lastReward=rarity==='inspector'&&this.lastRating===5?30:rarity==='inspector'&&this.lastRating===1?-1:rarity==='rare'&&this.lastRating===5?50:REWARDS[this.lastRating];
+  this.game.awardCoins(this.lastReward,'customer rating');
+  if(rarity==='inspector')this.game.daily.lastInspection=dateKey(this.now());
+  this.served++;this.phase='finished';this.lastBonuses=[];
+  for(const milestone of ACHIEVEMENTS){
+   if(this.served>=milestone.at&&!this.game.achievements.includes(milestone.id)){
+    this.game.achievements.push(milestone.id);this.game.awardCoins(5,'achievement');
+    this.lastBonuses.push({name:milestone.name,amount:5});
+   }
+  }
+  return {stars:this.lastRating,reward:this.lastReward,bonuses:[...this.lastBonuses],food:this.prepared,special:rarity};
+ }
  beginLeave(){if(this.phase!=='finished')throw Error('Customer is still eating or waiting');this.customer.transition(STATES.LEAVING);this.phase='leaving';return {...LOCATIONS.entrance}}
  finishLeave(){if(this.phase!=='leaving')throw Error('Customer has not left');this.game.customers.delete(this.currentId);this.currentId=null;return this.startNext()}
- serialize(){const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference}]));return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,pendingMove:this.pendingMove?{...this.pendingMove}:null}}
+ hasTool(id){return this.game.unlocked.tools.includes(id)}
+ purchase(id){
+  const item=itemById(id);if(!item)throw Error('Unknown shop item');
+  const bag=this.game.unlocked[item.kind];if(!Array.isArray(bag))throw Error('Invalid shop category');
+  if(bag.includes(id))throw Error('You already own this item');
+  if(this.game.coins<item.price)throw Error('You need '+(item.price-this.game.coins)+' more coins');
+  this.game.awardCoins(-item.price,'shop purchase');bag.push(id);
+  if(item.kind==='wallpaper')this.wallpaper=id;
+  if(item.kind==='furniture')this.game.decorations.push({id,x:.18+this.game.decorations.length*.16,y:.77,color:'pink'});
+  return item;
+ }
+ setWallpaper(id){if(id!=='default'&&!this.game.unlocked.wallpaper.includes(id))throw Error('Buy this wallpaper first');this.wallpaper=id}
+ decorate(id,x,y,color='pink'){
+  if(!this.game.unlocked.furniture.includes(id))throw Error('Buy this furniture first');
+  if(!FURNITURE_COLORS.some(c=>c.id===color))throw Error('Unknown color');
+  if(!Number.isFinite(x)||!Number.isFinite(y))throw Error('Invalid furniture position');
+  const item=this.game.decorations.find(d=>d.id===id);
+  if(!item)throw Error('Furniture not found');
+  item.x=Math.max(.06,Math.min(.94,x));item.y=Math.max(.35,Math.min(.92,y));item.color=color;
+  return item;
+ }
+ claimDaily(date=this.now()){
+  const day=dateKey(date);
+  if(this.game.daily.lastGift===day)throw Error('Today’s gift has already been opened');
+  this.game.daily.lastGift=day;
+  this.game.awardCoins(10,'daily gift');
+  return 10;
+ }
+
+ serialize(){
+  const details=Object.fromEntries([...this.game.customers.values()].map(c=>[c.id,{preference:c.preference,rarity:c.rarity}]));
+  return {version:SESSION_VERSION,game:this.game.snapshot(),details,currentId:this.currentId,queueIds:[...this.queueIds],phase:this.phase,scene:this.scene,selected:[...this.selected],cooking:this.cooking?{...this.cooking}:null,prepared:this.prepared?{...this.prepared,ingredients:[...this.prepared.ingredients]}:null,served:this.served,lastRating:this.lastRating,lastReward:this.lastReward,lastBonuses:[...this.lastBonuses],wallpaper:this.wallpaper,pendingMove:this.pendingMove?{...this.pendingMove}:null};
+ }
  restore(raw){try{
-  if(!raw||raw.version!==SESSION_VERSION||!raw.game||!Array.isArray(raw.game.customers))return false;
+  if(!raw||![2,3].includes(raw.version)||!raw.game||!Array.isArray(raw.game.customers))return false;
   const customers=new Map();
-  for(const data of raw.game.customers){if(!data||!validStates.has(data.state)||!data.id||customers.has(data.id))return false;const c=new Customer(data);c.preference=raw.details?.[c.id]?.preference==='baked'?'baked':'fruit';customers.set(c.id,c)}
+  for(const data of raw.game.customers){if(!data||!validStates.has(data.state)||!data.id||customers.has(data.id))return false;const c=new Customer(data);c.preference=raw.details?.[c.id]?.preference==='baked'?'baked':'fruit';c.rarity=raw.details?.[c.id]?.rarity||SPECIES[c.species]?.rarity||'common';customers.set(c.id,c)}
   if(!customers.has(raw.currentId)||!Array.isArray(raw.queueIds)||raw.queueIds.some(id=>!customers.has(id)||id===raw.currentId))return false;
   this.game.customers=customers;this.game.coins=clampInt(raw.game.coins);this.game.nextId=clampInt(raw.game.nextId,1);
-  this.game.unlocked=raw.game.unlocked||this.game.unlocked;this.game.achievements=raw.game.achievements||[];this.game.decorations=raw.game.decorations||[];this.game.daily=raw.game.daily||this.game.daily;
+  const unlock=raw.game.unlocked||{};
+  this.game.unlocked={
+   ingredients:[...new Set(['strawberry','blueberry','banana','flour','sugar','milk',...(Array.isArray(unlock.ingredients)?unlock.ingredients:[])])].filter(id=>validIngredients.has(id)),
+   customers:(Array.isArray(unlock.customers)?unlock.customers:[]).filter(x=>['dog','otter','giraffe'].includes(x)),
+   furniture:(Array.isArray(unlock.furniture)?unlock.furniture:[]).filter(id=>itemById(id)?.kind==='furniture'),
+   wallpaper:(Array.isArray(unlock.wallpaper)?unlock.wallpaper:[]).filter(id=>itemById(id)?.kind==='wallpaper'),
+   tools:(Array.isArray(unlock.tools)?unlock.tools:[]).filter(id=>itemById(id)?.kind==='tools')
+  };
+  this.game.achievements=Array.isArray(raw.game.achievements)?raw.game.achievements:[];
+  this.game.decorations=Array.isArray(raw.game.decorations)?raw.game.decorations.filter(d=>this.game.unlocked.furniture.includes(d.id)):[];
+  this.game.daily=raw.game.daily||this.game.daily;
   this.currentId=raw.currentId;this.queueIds=[...new Set(raw.queueIds)];this.phase=validPhases.has(raw.phase)?raw.phase:'waiting';
   this.scene=raw.scene==='kitchen'?'kitchen':'cafe';this.selected=Array.isArray(raw.selected)?raw.selected.filter(x=>validIngredients.has(x)).slice(0,4):[];
   this.cooking=raw.cooking&&['mix','bake'].includes(raw.cooking.method)?{...raw.cooking}:null;
   this.prepared=raw.prepared&&Number.isInteger(raw.prepared.stars)?raw.prepared:null;
-  this.served=clampInt(raw.served);this.lastRating=raw.lastRating||null;this.lastReward=clampInt(raw.lastReward);
+  this.served=clampInt(raw.served);this.lastRating=raw.lastRating||null;this.lastReward=Number.isInteger(raw.lastReward)?raw.lastReward:0;this.lastBonuses=Array.isArray(raw.lastBonuses)?raw.lastBonuses:[];this.wallpaper=this.game.unlocked.wallpaper.includes(raw.wallpaper)?raw.wallpaper:'default';
   this.pendingMove=raw.pendingMove||null;
   // Resume interrupted movement at its starting location or complete it safely.
   if(this.phase==='moving'){const p=this.pendingMove;if(p&&LOCATIONS[p.destination]&&validStates.has(p.arrivalState)){this.game.arrive(this.currentId,LOCATIONS[p.destination],p.arrivalState);this.phase=p.arrivalState===STATES.AT_COUNTER?'counter':'waiting'}else{this.customer.state=STATES.WAITING;this.phase='waiting'}this.pendingMove=null}
@@ -156,31 +283,187 @@ function convertLegacy(old){if(!old||old.version!==1||!old.game)return null;
  return state;
 }
 
+/* Modular vector character renderer — shared rig and interchangeable accessories. */
+const CHARACTER_RIG=Object.freeze({width:120,height:145,head:{x:60,y:64},neck:{x:60,y:94},headwear:{x:60,y:24},hands:{left:[24,103],right:[96,103]}});
+const palette={
+ cat:['#fff8ef','#e9a36c'],capybara:['#d9a778','#ba825b'],dog:['#e9ca9c','#be9066'],
+ otter:['#b88d69','#8b6148'],giraffe:['#f1c979','#c7894d'],
+ 'unicorn-cat':['#fff3fe','#e3b7ed'],'inspector-cat':['#fff8ef','#e9a36c'],
+ turkey:['#bf8066','#d99c4f'],ghost:['#f8fdff','#cbd9ed'],
+ 'santa-capybara':['#d9a778','#ba825b']
+};
+const safeColor=id=>palette[id]||palette.capybara;
+const oval=(x,y,rx,ry,fill)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry+'" fill="'+fill+'"/>';
+function characterSVG(c,expression='idle'){
+ const type=palette[c.species]?c.species:'capybara',cat=['cat','unicorn-cat','inspector-cat'].includes(type);
+ const [fur,accent]=safeColor(type);
+ const sleep=expression==='sleep',love=expression==='love',disgust=expression==='yuck',joy=expression==='happy';
+ const eye=sleep?'<path d="M33 61 Q41 67 49 61 M71 61 Q79 67 87 61" fill="none" stroke="#594037" stroke-width="3" stroke-linecap="round"/>':love?'<path d="M34 63 Q39 52 45 62 Q51 52 54 63 L44 74 Z M69 63 Q74 52 80 62 Q86 52 89 63 L79 74 Z" fill="#e885a8" stroke="none"/>':oval(41,62,4,4,'#372b29')+oval(79,62,4,4,'#372b29');
+ const mouth=disgust?'<path d="M51 90 Q60 78 69 90" fill="none" stroke="#68463d" stroke-width="3"/>':joy||love?'<path d="M49 82 Q60 99 71 82 Q60 90 49 82" fill="#9c5963" stroke="#704b43" stroke-width="2"/>':'<path d="M52 82 Q60 90 68 82" fill="none" stroke="#704b43" stroke-width="2"/>';
+ let behind='',ears='',faceExtra='',bodyExtra='',headExtra='';
+ if(cat){
+  ears='<path d="M17 51 L21 9 L45 29 Q60 23 75 29 L100 9 L103 51" fill="'+fur+'"/><path d="M25 21 L27 42 L41 32 M94 21 L93 41 L80 32" fill="#f3aec2" stroke="none"/>';
+  faceExtra='<path d="M15 45 Q34 25 51 38 L54 54 L19 61 Z" fill="'+accent+'" stroke="none"/><path d="M74 33 Q93 27 104 49 L80 56 Z" fill="#a4a1b5" stroke="none"/><path d="M20 83 L39 82 M81 82 L100 83" stroke="#80676c" stroke-width="2"/>';
+  if(type==='unicorn-cat')headExtra='<path d="M55 28 L62 -8 L69 30 Z" fill="#f7d787" stroke="#a97b72" stroke-width="2"/><path d="M60 15 L66 10" stroke="#fff" stroke-width="2"/>';
+  if(type==='inspector-cat')headExtra='<rect x="30" y="10" width="60" height="10" rx="3" fill="#52445c"/><path d="M43 11 L48 -3 L72 -3 L78 11" fill="#52445c"/>';
+ } else if(type==='dog'){
+  ears='<ellipse cx="18" cy="56" rx="14" ry="29" fill="'+accent+'" transform="rotate(12 18 56)"/><ellipse cx="102" cy="56" rx="14" ry="29" fill="'+accent+'" transform="rotate(-12 102 56)"/>';
+  faceExtra=oval(60,80,26,17,'#f5dfc3')+oval(60,75,6,4,'#5e4239')+'<path d="M31 43 Q44 32 52 43" fill="none" stroke="'+accent+'" stroke-width="8"/>';
+ } else if(type==='otter'){
+  ears=oval(21,45,13,13,accent)+oval(99,45,13,13,accent);
+  behind='<path d="M83 118 Q128 134 112 143" fill="none" stroke="'+accent+'" stroke-width="13" stroke-linecap="round"/>';
+  faceExtra=oval(60,82,27,16,'#f8e4d0')+oval(60,77,5,4,'#60453e');
+  bodyExtra=oval(60,110,24,20,'#f2d6be');
+ } else if(type==='giraffe'){
+  behind='<rect x="42" y="28" width="36" height="86" rx="18" fill="'+fur+'" stroke="#895c40" stroke-width="2"/>';
+  ears='<path d="M21 34 Q5 18 21 10 Q38 15 41 32 Z M79 32 Q84 15 100 10 Q117 18 99 34 Z" fill="'+fur+'"/><path d="M43 27 L41 2 M77 27 L79 2" stroke="#9c734a" stroke-width="6" stroke-linecap="round"/>'+oval(41,4,7,6,accent)+oval(79,4,7,6,accent);
+  bodyExtra=oval(39,104,8,10,accent)+oval(78,111,10,12,accent)+oval(61,129,8,7,accent);
+  faceExtra=oval(60,83,23,13,'#f1d4ad')+oval(60,79,5,3,'#966345');
+ } else if(type==='turkey'){
+  behind='<path d="M60 97 L6 47 Q-2 14 27 36 L37 10 Q58 -9 61 26 Q79 -9 91 11 L104 37 Q128 9 114 50 Z" fill="#d79b4c" stroke="#98674d" stroke-width="3"/><path d="M60 98 L17 39 M60 98 L37 19 M60 98 L81 19 M60 98 L105 40" stroke="#b36c4e" stroke-width="5"/>';
+  ears='';faceExtra='<path d="M52 79 L71 79 L60 95 Z" fill="#edac4b" stroke="#a56839" stroke-width="2"/>';
+ } else if(type==='ghost'){
+  behind='<path d="M20 118 L20 60 A40 42 0 0 1 100 60 L100 128 L85 116 L70 130 L55 118 L40 131 Z" fill="#fafdff" stroke="#c2cfe0" stroke-width="3"/>';
+  ears='';faceExtra=oval(60,80,8,11,'#b5c4da');
+ } else{
+  ears=oval(22,44,14,14,accent)+oval(98,44,14,14,accent);
+  faceExtra=oval(60,80,27,17,'#f6ddc4')+oval(60,74,6,4,'#65473d');
+ }
+ if(type==='santa-capybara')headExtra='<path d="M27 33 Q50 -9 86 3 L101 25 L89 32 Z" fill="#d85b68" stroke="#a63f54" stroke-width="2"/>'+oval(103,25,11,11,'#fff')+'<rect x="25" y="27" width="69" height="10" rx="5" fill="#fff"/>';
+ const arms='<g class="arms">'+oval(23,104,11,22,fur)+oval(97,104,11,22,fur)+'</g>';
+ const scarf=c.outfit==='scarf'?'<path d="M27 96 Q60 110 92 95 L87 108 Q60 123 33 108 Z" fill="#ec96b1"/><path d="M80 106 L99 129 L87 132 L72 114" fill="#e98aab"/>':'';
+ const apron=c.outfit==='apron'?'<path d="M42 98 L78 98 L87 132 Q60 143 33 132 Z" fill="#f5ebee" stroke="#b08d99" stroke-width="2"/><path d="M50 119 Q60 126 70 119" fill="none" stroke="#cf8ba1" stroke-width="3"/>':'';
+ const hat=c.headwear==='chef'?'<path d="M31 32 Q16 12 37 8 Q52 -5 62 7 Q82 -5 91 12 Q104 29 86 33 Z" fill="#fff" stroke="#cbbbc5" stroke-width="2"/><rect x="30" y="27" width="61" height="11" rx="4" fill="#fff0f7" stroke="#cbbbc5" stroke-width="2"/>':'';
+ const bow=c.headwear==='bow'?'<path d="M89 32 Q112 15 111 39 Q110 52 89 42 Q70 56 72 37 Q75 26 89 32 Z" fill="#ed9cb8" stroke="#b97694" stroke-width="2"/>':'';
+ const inspector=type==='inspector-cat'?'<path d="M57 97 L65 97 L68 116 L60 125 L53 116 Z" fill="#536579"/><circle cx="81" cy="65" r="12" fill="none" stroke="#8e7a56" stroke-width="3"/><path d="M93 64 L101 72" stroke="#8e7a56" stroke-width="2"/>':'';
+ return '<svg viewBox="0 0 120 145" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+type+'"><g stroke="#745248" stroke-linejoin="round" stroke-width="2.5">'+behind+'<g class="legs">'+oval(40,128,13,17,fur)+oval(80,128,13,17,fur)+'</g>'+oval(60,102,38,39,fur)+bodyExtra+arms+ears+oval(60,62,48,43,fur)+faceExtra+eye+mouth+headExtra+inspector+scarf+apron+hat+bow+'</g></svg>';
+}
 
 
+const checks=[];
+function test(title,fn){try{fn();checks.push({title,pass:true})}catch(e){checks.push({title,pass:false,error:e.message})}}
+function ensure(x,message){if(!x)throw Error(message)}
+function arrive(r){if(r.phase==='arriving'){r.planMove('waiting',STATES.WAITING);r.finishMove()}ensure(r.phase==='waiting','not waiting')}
+function toCounter(r){r.toCounter();r.finishMove();ensure(r.phase==='counter','not at counter')}
+function mix(r,items){r.openKitchen();for(const id of items)r.addIngredient(id);r.startMix();while(r.cooking?.method==='mix')r.stir();r.bringFood()}
+function bake(r,items){r.openKitchen();for(const id of items)r.addIngredient(id);r.startBake(1000);r.openOven(3500);r.bringFood()}
+function runCustomer(r,index){arrive(r);if(index%3===0){r.sit();r.finishMove();r.nap()}toCounter(r);if(index%2===0)mix(r,['strawberry','milk']);else bake(r,['flour','sugar']);const result=r.serve();r.beginLeave();r.finishLeave();return result}
 
-
-const output=document.getElementById('output'),results=[];
-function test(label,fn){try{fn();results.push('PASS — '+label)}catch(e){results.push('FAIL — '+label+': '+e.message)}}
-function assert(condition,message){if(!condition)throw Error(message)}
-function arrive(r){r.planMove('waiting',STATES.WAITING);r.finishMove();assert(r.phase==='waiting','arrival failed')}
-function counter(r){r.toCounter();r.finishMove();assert(r.phase==='counter','counter failed')}
-function mixed(r,items){r.openKitchen();for(const id of items)r.addIngredient(id);r.startMix();r.stir();r.stir();r.stir();assert(r.phase==='prepared','mixing failed');r.bringFood()}
-function baked(r,items){r.openKitchen();for(const id of items)r.addIngredient(id);r.startBake(1000);assert(!r.ovenReady(2000),'oven ready too soon');assert(r.ovenReady(3000),'oven never finished');r.openOven(3000);r.bringFood()}
-test('Complete ten customer visits',()=>{let r=new Restaurant(null,{random:()=>.1});for(let i=0;i<10;i++){arrive(r);if(i%2===0){r.sit();r.finishMove();r.nap();assert(r.customer.state===STATES.SLEEPING,'nap failed')}counter(r);if(i%2===0)mixed(r,['milk','strawberry']);else baked(r,['flour','sugar']);r.serve();assert(r.customer.state===STATES.EATING,'eating state missing');r.beginLeave();r.finishLeave()}assert(r.served===10,'wrong number served');assert(r.game.coins>0,'no rewards')});
-test('Duplicate serving cannot credit more coins',()=>{const r=new Restaurant(null,{random:()=>.1});arrive(r);counter(r);mixed(r,['milk','strawberry']);r.serve();const balance=r.game.coins;let blocked=false;try{r.serve()}catch{blocked=true}assert(blocked&&r.game.coins===balance,'double payment')});
-test('Unfinished mix restores',()=>{const r=new Restaurant(null,{random:()=>.1});arrive(r);counter(r);r.openKitchen();r.addIngredient('banana');r.startMix();r.stir();const copy=new Restaurant(r.serialize());assert(copy.cooking.method==='mix'&&copy.cooking.stirs===1&&copy.scene==='kitchen','mix restore failed')});
-test('Oven restores after reload',()=>{const r=new Restaurant(null,{random:()=>.1});arrive(r);counter(r);r.openKitchen();r.addIngredient('flour');r.startBake(1000);const copy=new Restaurant(r.serialize());assert(copy.ovenReady(3000),'oven did not finish after restoring');copy.openOven(3000);assert(copy.phase==='prepared','baked food not revealed')});
-test('Finished customers can leave after reload',()=>{const r=new Restaurant(null,{random:()=>.1});arrive(r);counter(r);mixed(r,['milk','strawberry']);r.serve();const copy=new Restaurant(r.serialize());assert(copy.phase==='finished'&&copy.customer.state===STATES.EATING,'not restored eating');copy.beginLeave();copy.finishLeave();assert(copy.phase==='arriving','next customer missing')});
-test('Moving guests safely resume',()=>{const r=new Restaurant(null,{random:()=>.1});r.planMove('waiting',STATES.WAITING);const copy=new Restaurant(r.serialize());assert(copy.phase==='waiting'&&copy.customer.state===STATES.WAITING,'movement interrupted')});
-test('Dish discovery is consistent',()=>{const a=resolveFood(['sugar','banana'],'bake'),b=resolveFood(['banana','sugar'],'bake');assert(a.id===b.id&&a.quality===b.quality,'order changes discovery')});
-test('Ratings remain within 1–5 stars',()=>{for(const pref of ['fruit','baked'])for(const method of ['mix','bake']){const f=resolveFood(['flour'],'bake');const x=rateFood(f,pref);assert(x>=1&&x<=5,'invalid rating')}});
-const passed=results.filter(x=>x.startsWith('PASS')).length;output.className=passed===results.length?'good':'bad';output.textContent=passed+' of '+results.length+' checks passed\n\n'+results.join('\n');
-
-document.getElementById('progress').textContent=output.className==='good'?'Engine checks complete':'Engine checks need attention';
+test('Fifty consecutive customers, including sitting and napping',()=>{
+ const r=new Restaurant(null,{random:()=>.7});
+ for(let i=0;i<50;i++)runCustomer(r,i);
+ ensure(r.served===50,'fewer than fifty served');
+ ensure(r.game.achievements.includes('fifty-customers'),'fifty celebration not awarded');
+ ensure(r.game.coins>0,'no coins earned')
+});
+test('Duplicate serving and repeated purchases are blocked',()=>{
+ const r=new Restaurant(null,{random:()=>.7});arrive(r);toCounter(r);mix(r,['strawberry','milk']);r.serve();const before=r.game.coins;
+ let blocked=false;try{r.serve()}catch{blocked=true}
+ ensure(blocked&&before===r.game.coins,'double serving gave coins');
+ r.game.coins+=300;r.purchase('mango');const after=r.game.coins;blocked=false;try{r.purchase('mango')}catch{blocked=true}
+ ensure(blocked&&after===r.game.coins,'duplicate purchase charged money')
+});
+test('New ingredients have Ivy’s exact prices',()=>{
+ const r=new Restaurant();r.game.coins=1070;
+ ensure(r.purchase('mango').price===20,'mango price');
+ ensure(r.purchase('starfruit').price===50,'starfruit price');
+ ensure(r.purchase('dragonfruit').price===1000,'dragon fruit price');
+ ensure(r.game.coins===0,'total purchase price incorrect')
+});
+test('Dragon fruit is universally loved',()=>{
+ const combinations=[['dragonfruit'],['dragonfruit','milk'],['banana','dragonfruit','flour','sugar']];
+ for(const m of ['mix','bake'])for(const items of combinations)for(const pref of ['fruit','baked']){
+  ensure(rateFood(resolveFood(items,m),pref)===5,'dragon fruit not universally 5 stars');
+ }
+});
+test('Mystery foods are consistent and can earn one star',()=>{
+ const a=resolveFood(['banana','sugar'],'bake'),b=resolveFood(['sugar','banana'],'bake');
+ ensure(a.id===b.id&&a.quality===b.quality,'order-dependent surprise');
+ let low=false;for(const id of INGREDIENTS){if(rateFood(resolveFood([id.id],'bake'),'fruit')===1)low=true}
+ ensure(low,'no one-star mystery recipe')
+});
+test('Fast mixer is three times faster',()=>{
+ const r=new Restaurant();r.game.coins=1000;r.purchase('fast-mixer');arrive(r);toCounter(r);r.openKitchen();r.addIngredient('milk');r.startMix();
+ ensure(r.cooking.stirsNeeded===1,'fast mixer requires more than one stir');
+ r.stir();ensure(r.phase==='prepared','fast mixer did not finish')
+});
+test('Sparkly oven bakes twice as fast',()=>{
+ const r=new Restaurant();r.game.coins=1000;r.purchase('sparkly-oven');arrive(r);toCounter(r);r.openKitchen();r.addIngredient('flour');r.startBake(1000);
+ ensure(!r.ovenReady(1800),'oven finished early');ensure(r.ovenReady(1900),'oven finished too late')
+});
+test('Purchased decorations move, recolor, and persist',()=>{
+ const r=new Restaurant();r.game.coins=300;r.purchase('plush-cushion');r.purchase('mint-wallpaper');r.decorate('plush-cushion',.71,.79,'mint');r.setWallpaper('mint-wallpaper');
+ const copy=new Restaurant(r.serialize());
+ ensure(copy.wallpaper==='mint-wallpaper','wallpaper lost');
+ ensure(copy.game.decorations[0].x===.71&&copy.game.decorations[0].color==='mint','decorations lost')
+});
+test('Cannot buy an item without enough coins',()=>{
+ const r=new Restaurant();let blocked=false;try{r.purchase('dragonfruit')}catch{blocked=true}
+ ensure(blocked&&r.game.coins===0,'item purchased without money')
+});
+test('Daily gift is paid once per local date',()=>{
+ const r=new Restaurant();const a=new Date(2026,10,21,10),b=new Date(2026,10,21,19),c=new Date(2026,10,22,10);
+ r.claimDaily(a);let blocked=false;try{r.claimDaily(b)}catch{blocked=true}
+ ensure(blocked&&r.game.coins===10,'multiple gifts same day');
+ r.claimDaily(c);ensure(r.game.coins===20,'next-day gift missing')
+});
+test('Friday inspector visits and gives special five-star reward',()=>{
+ const r=new Restaurant();r.now=()=>new Date(2026,10,27,12);r.game.daily.lastInspection=null;r.currentId=null;r.startNext();
+ ensure(r.customer.species==='inspector-cat','Friday guest missing');
+ arrive(r);toCounter(r);bake(r,['blueberry','flour','milk']);
+ const result=r.serve();ensure(result.stars===5&&result.reward===30,'inspector 5-star rule');
+ ensure(r.game.daily.lastInspection===dateKey(new Date(2026,10,27,12)),'inspector not recorded');
+ r.beginLeave();r.finishLeave();ensure(r.customer.species!=='inspector-cat','duplicate inspector')
+});
+test('A one-star inspector result costs one coin',()=>{
+ const r=new Restaurant();r.now=()=>new Date(2026,10,27,12);r.game.daily.lastInspection=null;r.currentId=null;r.startNext();r.game.coins=50;
+ arrive(r);toCounter(r);mix(r,['sugar']);r.prepared.stars=1;const result=r.serve();
+ ensure(result.reward===-1&&r.game.coins===49+5,'inspector penalty incorrect (achievement +5 separate)')
+});
+test('Rare visitor gets 50 coins for five stars',()=>{
+ const r=new Restaurant(null,{random:()=>.01});ensure(r.customer.species==='unicorn-cat','rare visitor missing');
+ arrive(r);toCounter(r);mix(r,['strawberry','milk']);const x=r.serve();
+ ensure(x.stars===5&&x.reward===50,'rare five-star reward');
+});
+test('Seasonal guests follow local calendar month',()=>{
+ ensure(eventSpecies(new Date(2026,9,31),()=>0)==='ghost','October');
+ ensure(eventSpecies(new Date(2026,10,21),()=>0)==='turkey','November');
+ ensure(eventSpecies(new Date(2026,11,25),()=>0)==='santa-capybara','December')
+});
+test('All species have a reusable character rendering',()=>{
+ for(const species of Object.keys(SPECIES)){
+  const svg=characterSVG({species,outfit:'apron',headwear:'chef'});
+  ensure(svg.includes('<svg')&&svg.includes('</svg>'),species+' rendering broken')
+ }
+});
+test('Unfinished mixing survives reload',()=>{
+ const r=new Restaurant();arrive(r);toCounter(r);r.openKitchen();r.addIngredient('banana');r.startMix();r.stir();
+ const c=new Restaurant(r.serialize());ensure(c.cooking.stirs===1&&c.scene==='kitchen','mix not restored')
+});
+test('Oven and completed dishes survive reload',()=>{
+ const r=new Restaurant();arrive(r);toCounter(r);r.openKitchen();r.addIngredient('flour');r.startBake(1000);
+ const c=new Restaurant(r.serialize());ensure(c.ovenReady(3000),'oven did not continue');
+ c.openOven(3000);const d=new Restaurant(c.serialize());ensure(d.phase==='prepared'&&d.prepared,'dish lost');
+ d.bringFood();d.serve();const e=new Restaurant(d.serialize());
+ ensure(e.phase==='finished'&&e.customer.state===STATES.EATING,'eating state lost');
+ e.beginLeave();e.finishLeave();ensure(e.phase==='arriving','next visit failed')
+});
+test('Interrupted customer movement restores without a crash',()=>{
+ const r=new Restaurant();r.planMove('waiting',STATES.WAITING);const copy=new Restaurant(r.serialize());
+ ensure(copy.phase==='waiting'&&copy.customer.state===STATES.WAITING,'interrupted move not recovered')
+});
+test('Version-two saved restaurants migrate without losing coins',()=>{
+ const r=new Restaurant();r.game.coins=137;const old=r.serialize();old.version=2;delete old.wallpaper;const copy=new Restaurant(old);
+ ensure(copy.game.coins===137,'old save lost coins')
+});
+const passed=checks.filter(t=>t.pass).length,failed=checks.filter(t=>!t.pass);
+const output=document.getElementById('output');output.className=failed.length?'bad':'good';
+output.textContent=passed+' of '+checks.length+' checks passed\n\n'+checks.map(x=>(x.pass?'PASS':'FAIL')+' — '+x.title+(x.error?'\n   '+x.error:'')).join('\n');
+document.getElementById('progress').textContent=failed.length?'Problems found — see below':'All engine checks complete';
 document.getElementById('repeat').onclick=()=>location.reload();
+
 </script>
 <script type="module">
-try{const mod=await import('../src/restaurant-engine.js');const check=new mod.Restaurant();document.getElementById('moduleStatus').textContent='Published game-engine imports: OK';document.getElementById('moduleStatus').className='ok'}
-catch(e){document.getElementById('moduleStatus').textContent='Published game-engine import failed: '+e.message+' (check GitHub Pages deployment and source paths).';document.getElementById('moduleStatus').className='bad'}
-</script></body></html>
+try{const m=await import('../src/restaurant-v3.js');new m.Restaurant();document.getElementById('modules').textContent='Published game-engine module imports: OK'}catch(e){document.getElementById('modules').textContent='Game engine failed to load: '+e.message}
+</script>
+</body></html>
