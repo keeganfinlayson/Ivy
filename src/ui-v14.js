@@ -88,6 +88,7 @@ function renderRoom(){
  const finished=session.phase==='finished';
  $('foodInCafe').classList.toggle('hidden',!finished);
  $('reaction').classList.toggle('hidden',!finished);
+ $('hearts').classList.toggle('hidden',!finished||session.lastRating<4);
  if(finished){
   const rating=session.lastRating,bonus=session.lastBonuses||[];
   $('foodInCafe').textContent=session.prepared?.emoji||'🍮';
