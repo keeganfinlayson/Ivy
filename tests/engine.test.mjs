@@ -24,7 +24,7 @@ test('recipes are consistent and dragon fruit always gets 5 stars',()=>{
 test('shop prices and nonrepeatable purchases',()=>{
  const g=new Restaurant();g.game.coins=1200;
  for(const [id,cost] of [['mango',20],['starfruit',50],['dragonfruit',1000]])assert.equal(g.purchase(id).price,cost);
- assert.equal(g.game.coins,130);assert.throws(()=>g.purchase('mango'));assert.throws(()=>g.purchase('fast-mixer'));
+ assert.equal(g.game.coins,130);assert.throws(()=>g.purchase('mango'));assert.throws(()=>g.purchase('sparkly-oven'));
 });
 test('mixing and oven upgrades',()=>{
  const g=new Restaurant();g.game.coins=500;g.purchase('fast-mixer');g.purchase('sparkly-oven');
