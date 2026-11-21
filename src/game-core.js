@@ -1,6 +1,6 @@
-/* Mochi Munch gameplay core v0.7 — independent of rendering */
+/* Mochi Munch gameplay core — independent of rendering */
 export const SAVE_VERSION=1;
-export const CUSTOMER_TYPES=Object.freeze({capybara:{id:'capybara',name:'Capybara',body:'round',rarity:'common'},cat:{id:'cat',name:'Calico Cat',body:'round',rarity:'common'}});
+export const CUSTOMER_TYPES=Object.freeze({capybara:{id:'capybara',name:'Capybara',body:'round',rarity:'common'},cat:{id:'cat',name:'Calico Cat',body:'round',rarity:'common'},dog:{id:'dog',name:'Puppy',body:'round',rarity:'common'},otter:{id:'otter',name:'Otter',body:'round',rarity:'common'},giraffe:{id:'giraffe',name:'Giraffe',body:'tall',rarity:'common'},'unicorn-cat':{id:'unicorn-cat',name:'Unicorn Kitty',body:'round',rarity:'rare'},'inspector-cat':{id:'inspector-cat',name:'Inspector Cat',body:'round',rarity:'inspector'},turkey:{id:'turkey',name:'Turkey',body:'round',rarity:'seasonal'},ghost:{id:'ghost',name:'Ghost',body:'float',rarity:'seasonal'},'santa-capybara':{id:'santa-capybara',name:'Santa Capybara',body:'round',rarity:'seasonal'}});
 export const LOCATIONS=Object.freeze({entrance:{x:.13,y:.75},waiting:{x:.27,y:.77},bench:{x:.29,y:.72},counter:{x:.72,y:.78}});
 export const STATES=Object.freeze({ENTERING:'entering',WAITING:'waiting',WALKING:'walking',SEATED:'seated',SLEEPING:'sleeping',AT_COUNTER:'at_counter',IN_KITCHEN:'in_kitchen',EATING:'eating',LEAVING:'leaving'});
 const allowed={entering:['walking'],waiting:['walking','seated','sleeping'],walking:['waiting','seated','sleeping','at_counter','leaving'],seated:['walking','sleeping'],sleeping:['walking','seated'],at_counter:['walking','in_kitchen','eating'],in_kitchen:['at_counter','eating'],eating:['leaving','at_counter'],leaving:[]};
