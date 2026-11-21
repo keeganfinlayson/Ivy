@@ -152,7 +152,7 @@ export function characterSVG(c,expression='idle'){
   let exp=['idle','blink','walk','wait','sit','sleep','order','taste','love','happy','yuck','surprise'].includes(expression)?expression:'idle';
   if(exp==='walk'||exp==='wait'||exp==='sit'||exp==='order')exp='idle';
   const special=specialParts(species,p),dress=clothing(c,p);
-  const replaceDefs=s=>s.replace(/#\{\{fur\}\}/g,'url(#'+id+'-fur)').replace(/#\{\{blush\}\}/g,'#'+id+'-blush');
+  const replaceDefs=s=>s.replace(/#\{\{fur\}\}/g,'#'+id+'-fur').replace(/#\{\{blush\}\}/g,'#'+id+'-blush');
   const torso=g('torso',
      E(87,157,47,42,'url(#'+id+'-body)',rim)
      +S('M60 139 Q79 131 110 141','none','stroke="'+p.light+'" stroke-width="5" stroke-linecap="round" opacity=".55"'));
