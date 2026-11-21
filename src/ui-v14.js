@@ -1,9 +1,10 @@
-/* Mochi Munch interface v0.16 — scrollable scene with protected queue formation. */
+/* Mochi Munch interface v0.17 — illustrated poses and strawberry café. */
 import {STATES,LOCATIONS} from './game-core.js';
 import {Restaurant,SAVE_KEY,convertLegacy} from './restaurant-v3.js';
 import {INGREDIENTS} from './recipes.js';
 import {SPECIES,SHOP_CATALOG,FURNITURE_COLORS,ACHIEVEMENTS,dateKey,itemById,guestLabel} from './game-content.js';
-import {characterSVG} from './characters.js';
+import {characterSVG} from './characters-illustrated.js';
+import {cafeBackdropSVG,cafeForegroundSVG} from './cafe-illustration.js';
 import {LINE_SPOTS,routeFor,cameraPosition,WORLD_WIDTH} from './scene-layout.js';
 
 const $=id=>document.getElementById(id);
@@ -16,6 +17,11 @@ function readSave(){try{
  return legacy?convertLegacy(JSON.parse(legacy)):null;
 }catch{return null}}
 const session=new Restaurant(readSave());
+const CHEF={id:'mochi-chef',species:'capybara',outfit:'apron',headwear:'chef'};
+$('sceneArt').innerHTML=cafeBackdropSVG();
+$('sceneForeground').innerHTML=cafeForegroundSVG();
+$('chefCharacter').innerHTML=characterSVG(CHEF,'happy');
+$('peekKitty').innerHTML=characterSVG({id:'peekaboo-kitty',species:'cat',outfit:'none',headwear:'bow'},'surprise');
 let settings={sound:false,reduce:false};try{settings={...settings,...JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')}}catch{}
 let view=session.scene==='kitchen'?'kitchen':'cafe',shopTab='ingredients',selectedDecor=null;
 let visualPos={...session.customer.position},animating=false,frame=null,flashTimeout=null,audio=null,peekHiddenAt=-1;
@@ -40,15 +46,18 @@ function act(fn,tone=550){
 }
 function mood(c,active=false){
  if(active&&animating)return 'walk';
- if(active&&session.phase==='finished')return session.lastRating>=4?'love':session.lastRating<=2?'yuck':'happy';
+ if(active&&session.phase==='finished')return session.lastRating>=5?'love':session.lastRating>=3?'happy':'yuck';
+ if(active&&session.phase==='prepared')return 'surprise';
+ if(active&&session.phase==='counter')return 'order';
  if(c.state===STATES.SLEEPING)return 'sleep';
- if(c.state===STATES.SEATED)return 'idle';
+ if(c.state===STATES.SEATED)return 'sit';
  return 'idle';
 }
 function renderAnimal(){
  const c=session.customer;if(!c)return;
  animal.innerHTML=characterSVG(c,mood(c,true));
- animal.className='animal '+(animating?'walk':session.phase==='finished'?'eat':c.state===STATES.SEATED?'sit':c.state===STATES.SLEEPING?'sleep':'');
+ const resultFace=session.lastRating>=4?'good':session.lastRating<=2?'bad':'neutral';
+ animal.className='animal '+(animating?'walk':session.phase==='finished'?'react '+resultFace:session.phase==='prepared'?'surprised':session.phase==='counter'?'ordering':c.state===STATES.SEATED?'sit':c.state===STATES.SLEEPING?'sleep':'idle');
  animal.style.left=(visualPos.x*100)+'%';animal.style.top=(visualPos.y*100)+'%';
  // Keep each queue animal's DOM element so position changes animate smoothly.
  const living=new Set(),layer=$('guestLayer');
@@ -107,7 +116,12 @@ function renderWeather(){
 function renderRoom(){
  const wall=session.wallpaper;
  room.dataset.wallpaper=wall;
- renderWeather();renderAnimal();renderDecor();
+ renderWeather();
+ $('sceneArt').dataset.weather=$('window').dataset.weather;
+ $('sceneArt').dataset.wallpaper=wall;
+ $('chefCharacter').innerHTML=characterSVG(CHEF,session.phase==='finished'?(session.lastRating<=2?'surprise':'happy'):'idle');
+ $('chefCharacter').className='chef-character '+(session.phase==='finished'?(session.lastRating<=2?'surprised':'celebrate'):'');
+ renderAnimal();renderDecor();
  $('peekKitty').classList.toggle('hidden',session.served<2||session.served%4!==2||session.phase!=='waiting'||peekHiddenAt===session.served);
  const finished=session.phase==='finished';
  $('foodInCafe').classList.toggle('hidden',!finished);
@@ -116,6 +130,8 @@ function renderRoom(){
  if(finished){
   const rating=session.lastRating,bonus=session.lastBonuses||[];
   $('foodInCafe').textContent=session.prepared?.emoji||'🍮';
+  $('foodInCafe').style.left=(visualPos.x*100+3.4)+'%';
+  $('foodInCafe').style.top=(visualPos.y*100-26)+'%';
   $('reaction').replaceChildren();
   const caption=document.createElement('strong');
   caption.textContent=rating>=5?'Love it!':rating===4?'So yummy!':rating===3?'Pretty tasty!':rating===2?'Hmm… a little unusual!':'What a wobbly surprise!';
