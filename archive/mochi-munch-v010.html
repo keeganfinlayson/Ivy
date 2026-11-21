@@ -1,0 +1,198 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mochi Munch v0.10</title><style>*{box-sizing:border-box}body{margin:0;background:#fff3f7;color:#604355;font:16px system-ui,sans-serif}header{background:#ffe0eb;padding:15px 22px}h1{margin:0;font-size:1.5rem}main{max-width:1000px;margin:auto;padding:16px}.cafe{height:510px;position:relative;overflow:hidden;border:6px solid #dca8ba;border-radius:24px;background:linear-gradient(#ffe5ef 0 73%,#dcbfa9 73%);touch-action:manipulation}.window{position:absolute;top:40px;left:40px;width:155px;height:155px;background:linear-gradient(#b9e8fc,#e3f8ff);border:12px solid white;border-radius:18px;box-shadow:0 5px #d6b4bd}.window:after{content:"";position:absolute;left:60px;top:0;bottom:0;border-left:8px solid white}.counter{position:absolute;right:25px;bottom:30px;width:36%;height:110px;background:#f2b1c7;border:7px solid #b97990;border-radius:18px;box-shadow:inset 0 15px #ffe2ea;display:grid;place-items:center;font-weight:800;letter-spacing:2px}.bench{position:absolute;left:15%;bottom:90px;width:190px;height:70px;border-radius:20px;background:#f3c0d1;border:6px solid #be8da1}.bench:after{content:"";position:absolute;left:20px;right:20px;bottom:-30px;height:30px;border-left:10px solid #a77789;border-right:10px solid #a77789}.door{position:absolute;left:8px;bottom:27%;width:83px;height:160px;background:#fff8fa;border:6px solid #cc9aaa;border-radius:50px 50px 0 0;text-align:center;padding-top:60px;font-size:12px}.animal{position:absolute;width:100px;height:120px;transform:translate(-50%,-100%);transition:none;pointer-events:none;filter:drop-shadow(0 5px 2px #0002)}.animal svg{width:100%;height:100%;overflow:visible}.animal.walk .legs{animation:stride .26s ease-in-out infinite alternate;transform-origin:50% 70%}.animal.walk .arms{animation:swing .26s ease-in-out infinite alternate;transform-origin:50% 50%}.animal.walk svg{animation:bob .26s ease-in-out infinite alternate}.animal.sit svg{transform:scaleY(.82);transform-origin:50% 100%}.animal.sleep svg{animation:breathe 2s ease-in-out infinite alternate}@keyframes stride{to{transform:skewX(12deg)}}@keyframes swing{to{transform:rotate(8deg)}}@keyframes bob{to{transform:translateY(-4px)}}@keyframes breathe{to{transform:scaleY(.97)}}.controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.controls button,.controls select{font:inherit;padding:10px 14px;border:2px solid #d9a3b6;border-radius:12px;background:white;color:#604355;cursor:pointer}.controls button:hover{background:#ffe2ec}.status{padding:14px;border-radius:14px;background:white;min-height:50px}.note{font-size:.88rem;color:#806776} @media(max-width:600px){.cafe{height:400px}.bench{left:15%;width:130px}.counter{width:39%;font-size:12px}.animal{width:82px;height:100px}}.hidden{display:none!important}.panel{background:#fff;border:3px solid #dca8ba;border-radius:20px;padding:18px;margin-top:12px}.ingredients{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.ingredients button{border:2px solid #d9a3b6;border-radius:12px;background:#fff6fa;padding:14px;font:inherit;cursor:pointer}.bowl{border:3px dashed #d9a3b6;border-radius:15px;margin-top:12px;padding:18px;text-align:center}.controls button:disabled{opacity:.4;cursor:not-allowed}.badge{float:right;background:#fff;border-radius:16px;padding:6px 12px}.result{font-size:22px;font-weight:700;text-align:center}.queue{background:#fff;padding:10px;border-radius:12px;margin:10px 0}.animal.eat svg{animation:bob .35s ease-in-out infinite alternate}
+.version{font-size:.57em;font-weight:600;white-space:nowrap}
+#cafeControls{align-items:center}
+.guest-layer{position:absolute;inset:0;pointer-events:none}
+.guest{position:absolute;width:72px;height:93px;transform:translate(-50%,-100%);filter:drop-shadow(0 3px 2px #0002)}
+.guest svg{height:100%;width:100%}
+.guest:nth-child(1){left:28%;top:71%}.guest:nth-child(2){left:16%;top:85%}.guest:nth-child(3){left:40%;top:86%}
+.cafe-food{position:absolute;left:64%;top:45%;font-size:58px;animation:foodpop .6s ease both;pointer-events:none}
+.reaction-bubble{position:absolute;top:6%;right:5%;width:min(285px,48%);border:3px solid #dca8ba;border-radius:18px;padding:14px;background:#fffafc;box-shadow:0 5px 14px #8c53602e;text-align:center;animation:foodpop .45s ease both}
+.reaction-bubble .stars{font-size:25px;color:#d49422;letter-spacing:1px}
+.reaction-bubble .reward{font-size:22px;font-weight:800}
+@keyframes foodpop{0%{opacity:0;transform:scale(.7)}75%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+.cook-table{background:#fff1e5;border-radius:18px;padding:14px;margin-top:12px}
+.bowl{font-size:18px;min-height:110px;background:linear-gradient(#fff9fc,#fce3ee)}
+.bowl-emoji{font-size:52px;display:block}
+.bowl.stirring .bowl-emoji{animation:stirring .34s ease-in-out}
+@keyframes stirring{0%{transform:rotate(-18deg)}50%{transform:rotate(18deg) scale(1.1)}100%{transform:rotate(0)}}
+.selected-list{display:block;font-size:16px;line-height:1.7}
+.cook-activity{margin-top:12px;background:#fff4f7;border-radius:15px;padding:14px;min-height:74px}
+.oven{font-size:50px;display:block;text-align:center}
+.oven.hot{animation:ovenglow 1s ease-in-out infinite alternate}
+@keyframes ovenglow{to{filter:drop-shadow(0 0 13px #f5a052)}}
+.discovered{background:#fff3cf;border:3px solid #e8c771;border-radius:16px;text-align:center;padding:20px;animation:foodpop .5s ease both}
+.discovered .dish{font-size:74px;display:block}
+.discovered h3{margin:8px 0}
+#kitchen .controls{justify-content:center}
+.controls button:focus-visible,.ingredients button:focus-visible{outline:3px solid #a9587c;outline-offset:2px}
+@media(max-width:600px){h1{font-size:1.12rem}.guest{width:51px;height:68px}.reaction-bubble{padding:8px;font-size:13px}.reaction-bubble .stars{font-size:20px}.cafe-food{font-size:40px}.ingredients{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.animal.walk .legs,.animal.walk .arms,.animal.walk svg,.animal.eat svg,.discovered,.reaction-bubble,.cafe-food,.bowl.stirring .bowl-emoji,.oven.hot{animation:none!important}}
+</style></head><body><header><h1>🍓 Mochi Munch <span class="version">Version 0.10 · Development</span> <span class="badge" id="coins">🪙 0</span></h1></header><main><div class="controls" id="cafeControls">
+<button id="counterBtn">Go to counter</button><button id="seatBtn">Sit on bench</button><button id="sleepBtn">Take a nap</button><button id="kitchenBtn">Go to kitchen</button><button id="serveBtn">Serve food</button><button id="nextBtn">Next customer</button>
+<label>Outfit <select id="outfit"><option value="none">None</option><option value="scarf">Scarf</option><option value="apron">Apron</option></select></label>
+<label>Hat <select id="hat"><option value="none">None</option><option value="chef">Chef hat</option><option value="bow">Bow</option></select></label>
+</div><div class="queue" id="queue"></div><section class="cafe" id="cafe" aria-label="Café room"><div class="window"></div><div class="door">ENTRY</div><div class="bench"></div><div class="counter">COUNTER</div><div class="guest-layer" id="guestLayer" aria-hidden="true"></div><div class="animal" id="animal"></div><div id="cafeFood" class="cafe-food hidden" aria-hidden="true"></div><div id="reactionBubble" class="reaction-bubble hidden" role="status"></div></section><section class="panel hidden" id="kitchen" aria-label="Kitchen"><h2>Make something delicious!</h2>
+<p>Choose up to four ingredients. Tap them or drag them into the bowl. What will they turn into?</p>
+<div class="ingredients" id="ingredients"></div>
+<div class="cook-table">
+ <div class="bowl" id="bowl" aria-label="Mixing bowl"><span class="bowl-emoji">🥣</span><span class="selected-list" id="selected">Empty bowl</span></div>
+ <div class="controls" id="startCooking"><button id="clearBtn">Empty bowl</button><button id="mixBtn">Mix ingredients</button><button id="bakeBtn">Put in oven</button><button id="returnBtn">Back to café</button></div>
+ <div class="cook-activity hidden" id="mixing"><p id="mixText">Stir the ingredients!</p><button id="stirBtn">Stir the bowl</button></div>
+ <div class="cook-activity hidden" id="baking"><span class="oven hot">♨️ 🔥</span><p id="ovenText">Your surprise is baking…</p><button id="openOvenBtn" disabled>Open the oven</button></div>
+ <div class="discovered hidden" id="discovered"><span class="dish" id="dishEmoji">🧁</span><h3 id="dishName"></h3><p>A surprise! Bring it out to your customer.</p><button id="bringBtn">Bring to counter</button></div>
+</div></section>
+<p class="status" id="status" aria-live="polite"></p><p class="note">Prototype artwork. Recipes are discoveries, not shown in a book. Progress saves on this device.</p></main><script type="module">
+
+import {STATES,LOCATIONS} from './src/game-core.js';
+import {INGREDIENTS} from './src/recipes.js';
+import {Restaurant,SAVE_KEY,convertLegacy} from './src/restaurant-engine.js';
+const $=id=>document.getElementById(id);
+const cafe=$('cafe'),animal=$('animal'),status=$('status');
+const reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let session,visualPos,animating=false,frame=null,bowlTimer=null;
+function report(message){status.textContent=message}
+function readSave(){
+ try{const raw=localStorage.getItem(SAVE_KEY);if(raw)return JSON.parse(raw);
+ const legacy=localStorage.getItem('mochi-munch-consolidated-v1');return legacy?convertLegacy(JSON.parse(legacy)):null}catch{return null}
+}
+session=new Restaurant(readSave());
+visualPos={...session.customer.position};
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(session.serialize()))}catch{report('Your browser cannot save progress right now.')}}
+function art(c){let cat=c.species==='cat',fur=cat?'#fff9f3':'#dba776',outline='#704c40',scarf=c.outfit==='scarf',apron=c.outfit==='apron',hat=c.headwear==='chef',bow=c.headwear==='bow';return '<svg viewBox="0 0 120 145" xmlns="http://www.w3.org/2000/svg"><g stroke="'+outline+'" stroke-width="3" stroke-linejoin="round"><g class="legs"><ellipse cx="40" cy="126" rx="13" ry="17" fill="'+fur+'"/><ellipse cx="80" cy="126" rx="13" ry="17" fill="'+fur+'"/></g><ellipse cx="60" cy="99" rx="37" ry="37" fill="'+fur+'"/><g class="arms"><ellipse cx="23" cy="101" rx="11" ry="21" fill="'+fur+'"/><ellipse cx="97" cy="101" rx="11" ry="21" fill="'+fur+'"/></g>'+(cat?'<path d="M17 51 L20 8 L45 28 Q60 20 75 28 L101 8 L103 51" fill="'+fur+'"/><path d="M25 21 L27 41 L40 31 M95 21 L93 41 L80 31" fill="#f5b8c5" stroke="none"/>':'<circle cx="24" cy="43" r="13" fill="#c48a62"/><circle cx="96" cy="43" r="13" fill="#c48a62"/>')+'<ellipse cx="60" cy="63" rx="48" ry="43" fill="'+fur+'"/>'+(cat?'<path d="M18 45 Q34 22 52 35 L56 53 L20 62 Z" fill="#e9a36c" stroke="none"/><path d="M73 33 Q93 25 102 52 L79 57 Z" fill="#a8a1b0" stroke="none"/>':'')+'<ellipse cx="60" cy="79" rx="25" ry="17" fill="#f7dfc9" stroke="none"/><circle cx="42" cy="60" r="4" fill="#382822" stroke="none"/><circle cx="79" cy="60" r="4" fill="#382822" stroke="none"/><ellipse cx="60" cy="74" rx="5" ry="4" fill="'+outline+'" stroke="none"/><path d="M53 83 Q60 91 67 83" fill="none" stroke-width="2"/>'+(scarf?'<path d="M28 93 Q60 110 92 93 L87 106 Q60 121 33 106 Z" fill="#f3a8c3"/><path d="M81 107 L99 128 L87 132 L72 114" fill="#f3a8c3"/>':'')+(apron?'<path d="M42 101 L78 101 L86 131 Q60 141 34 131 Z" fill="#ffe3ed"/>':'')+(hat?'<path d="M32 30 Q21 9 40 7 Q60 -5 78 7 Q99 11 88 30 Z" fill="#fff"/><rect x="31" y="27" width="58" height="10" rx="4" fill="#f4b4cb"/>':'')+(bow?'<path d="M85 36 Q107 16 110 38 Q113 56 89 44 Q68 58 72 39 Q76 26 85 36 Z" fill="#f3a8c3"/>':'')+'</g></svg>'}
+
+function mood(){if(animating)return 'walk';if(session.phase==='finished')return 'eat';if(session.customer.state===STATES.SEATED)return 'sit';if(session.customer.state===STATES.SLEEPING)return 'sleep';return 'idle'}
+function draw(){
+ animal.innerHTML=art(session.customer);
+ animal.className='animal '+mood();
+ animal.style.left=(visualPos.x*100)+'%';animal.style.top=(visualPos.y*100)+'%';
+}
+function drawQueue(){
+ $('guestLayer').innerHTML=session.queue.map(c=>'<div class="guest">'+art(c)+'</div>').join('');
+ $('queue').textContent='Waiting: '+session.queue.map(c=>c.species==='cat'?'🐱':'🦫').join(' ')+'  • Customers served: '+session.served;
+}
+function showFood(){
+ const visible=session.phase==='finished';
+ $('reactionBubble').classList.toggle('hidden',!visible);
+ $('cafeFood').classList.toggle('hidden',!visible);
+ if(visible){
+  const n=session.lastRating,food=session.prepared;
+  $('cafeFood').textContent=food?.emoji||'🍮';
+  const comment=n>=5?'They love it!':n===4?'Yummy!':n===3?'Pretty good!':n===2?'Not their favorite.':'That was a strange surprise!';
+  $('reactionBubble').innerHTML='<strong>'+comment+'</strong><div class="stars">'+('★'.repeat(n))+('☆'.repeat(5-n))+'</div><div class="reward">+'+session.lastReward+' coins</div>';
+ }
+}
+function render(){
+ const c=session.customer;if(!c)return;
+ const inKitchen=session.scene==='kitchen';
+ cafe.classList.toggle('hidden',inKitchen);$('kitchen').classList.toggle('hidden',!inKitchen);
+ $('cafeControls').classList.toggle('hidden',inKitchen);
+ $('coins').textContent='🪙 '+session.game.coins;
+ $('outfit').value=c.outfit;$('hat').value=c.headwear;
+ $('outfit').disabled=$('hat').disabled=animating;
+ $('counterBtn').disabled=animating||session.phase!=='waiting';
+ $('seatBtn').disabled=animating||session.phase!=='waiting'||c.state===STATES.SEATED;
+ $('sleepBtn').disabled=animating||session.phase!=='waiting'||c.state===STATES.SLEEPING;
+ $('kitchenBtn').disabled=animating||session.phase!=='counter';
+ $('serveBtn').disabled=animating||session.phase!=='prepared';
+ $('nextBtn').disabled=animating||session.phase!=='finished';
+ $('selected').textContent=session.selected.length?session.selected.map(id=>{const f=INGREDIENTS.find(x=>x.id===id);return f.emoji+' '+f.name}).join('  +  '):'Empty bowl';
+ for(const el of $('ingredients').children)el.disabled=session.phase!=='counter'||!!session.cooking||session.selected.length>=4;
+ $('startCooking').classList.toggle('hidden',!!session.cooking||session.phase==='prepared');
+ $('mixing').classList.toggle('hidden',session.cooking?.method!=='mix');
+ $('baking').classList.toggle('hidden',session.cooking?.method!=='bake');
+ $('discovered').classList.toggle('hidden',session.phase!=='prepared'||!inKitchen);
+ $('mixBtn').disabled=$('bakeBtn').disabled=session.selected.length===0;
+ if(session.cooking?.method==='mix'){
+  $('mixText').textContent='Mix it up! '+session.cooking.stirs+' of 3 stirs.';
+  $('stirBtn').textContent='Stir! ('+(session.cooking.stirs+1)+'/3)';
+ }
+ if(session.cooking?.method==='bake')tickOven();
+ if(session.phase==='prepared'&&inKitchen){
+  $('dishEmoji').textContent=session.prepared.emoji;
+  $('dishName').textContent=session.prepared.name;
+ }
+ drawQueue();draw();showFood();
+}
+function tickOven(){
+ if(session.cooking?.method!=='bake')return;
+ const seconds=Math.max(0,(1800-(Date.now()-session.cooking.startedAt))/1000);
+ $('openOvenBtn').disabled=seconds>0;
+ $('ovenText').textContent=seconds>0?'The oven is warm… '+seconds.toFixed(1)+' seconds':'Ding! Open the oven to see your surprise!';
+}
+function movement(target,finish){
+ if(animating)return;
+ animating=true;
+ const start={...visualPos},end={...target};
+ const distance=Math.hypot((end.x-start.x)*cafe.clientWidth,(end.y-start.y)*cafe.clientHeight);
+ const duration=reduceMotion?1:Math.max(350,distance/125*1000);
+ let t0=null;
+ function step(now){
+  if(t0===null)t0=now;
+  const p=Math.min(1,(now-t0)/duration),ease=p*p*(3-2*p);
+  visualPos={x:start.x+(end.x-start.x)*ease,y:start.y+(end.y-start.y)*ease};
+  animal.style.left=visualPos.x*100+'%';animal.style.top=visualPos.y*100+'%';
+  if(p<1)frame=requestAnimationFrame(step);
+  else{frame=null;animating=false;try{finish()}catch(e){report(e.message)}visualPos={...session.customer.position};render();save()}
+ }
+ render();
+ frame=requestAnimationFrame(step);
+}
+function tryAction(action){
+ try{const out=action();render();save();return out}catch(e){report(e.message);return false}
+}
+function moveAction(action,text){
+ const before=session.phase;try{
+  const pos=action();
+  if(pos){
+   report(text);movement(pos,()=>{session.finishMove();report('Customer arrived!')});
+  }else{render();save()}
+ }catch(e){report(e.message);if(before!==session.phase)render()}
+}
+function arrival(){
+ if(session.phase!=='arriving')return;
+ moveAction(()=>session.planMove('waiting',STATES.WAITING),'Your new customer is walking in!');
+}
+$('counterBtn').onclick=()=>moveAction(()=>session.toCounter(),'The customer is coming to the counter!');
+$('seatBtn').onclick=()=>moveAction(()=>session.sit(),'The customer is sitting down.');
+$('sleepBtn').onclick=()=>moveAction(()=>session.nap(),'Shhh… nap time!');
+$('outfit').onchange=()=>tryAction(()=>{session.customer.outfit=$('outfit').value});
+$('hat').onchange=()=>tryAction(()=>{session.customer.headwear=$('hat').value});
+$('kitchenBtn').onclick=()=>tryAction(()=>{session.openKitchen();report('Choose your ingredients. Try mixing or baking!')});
+$('returnBtn').onclick=()=>tryAction(()=>{session.returnCafe();report('Back at the café counter.')});
+for(const ingredient of INGREDIENTS){
+ const b=document.createElement('button');b.textContent=ingredient.emoji+' '+ingredient.name;
+ b.draggable=true;b.dataset.ingredient=ingredient.id;
+ b.onclick=()=>tryAction(()=>{session.addIngredient(ingredient.id);report('Added '+ingredient.name)});
+ b.ondragstart=e=>e.dataTransfer.setData('text/plain',ingredient.id);
+ $('ingredients').append(b);
+}
+$('bowl').ondragover=e=>e.preventDefault();
+$('bowl').ondrop=e=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');tryAction(()=>session.addIngredient(id))};
+$('clearBtn').onclick=()=>tryAction(()=>session.clearIngredients());
+$('mixBtn').onclick=()=>tryAction(()=>{session.startMix();report('Stir the bowl three times!')});
+$('stirBtn').onclick=()=>tryAction(()=>{
+ $('bowl').classList.remove('stirring');void $('bowl').offsetWidth;$('bowl').classList.add('stirring');
+ if(bowlTimer)clearTimeout(bowlTimer);bowlTimer=setTimeout(()=>$('bowl').classList.remove('stirring'),360);
+ const made=session.stir();report(made?'You discovered '+made.name+'!':'Keep stirring!');
+});
+$('bakeBtn').onclick=()=>tryAction(()=>{session.startBake();report('Your food is baking in the oven!')});
+$('openOvenBtn').onclick=()=>tryAction(()=>{const food=session.openOven();report('Surprise! You made '+food.name+'!')});
+$('bringBtn').onclick=()=>tryAction(()=>{session.bringFood();report('Bring the food to your customer!')});
+$('serveBtn').onclick=()=>tryAction(()=>{
+ const r=session.serve();
+ report('Your '+session.customer.species+' gives '+r.stars+' stars. You earned '+r.reward+' coins!');
+});
+$('nextBtn').onclick=()=>{
+ try{const end=session.beginLeave();save();report('Your customer is leaving. See you soon!');
+ movement(end,()=>{session.finishLeave();report('A new customer has arrived!');requestAnimationFrame(arrival)})}
+ catch(e){report(e.message)}
+};
+window.addEventListener('pagehide',save);
+setInterval(tickOven,150);
+render();save();
+if(session.phase==='arriving')requestAnimationFrame(arrival);
+else if(session.phase==='finished')report('Your customer has eaten! Choose Next customer.');
+else if(session.phase==='prepared')report('Your surprise food is ready!');
+else report('Welcome back to your restaurant!');
+
+</script></body></html>
