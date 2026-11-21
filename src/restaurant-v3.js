@@ -161,7 +161,7 @@ export class Restaurant{
  }catch{return false}}
 }
 export function convertLegacy(old){if(!old||old.version!==1||!old.game)return null;
- const state={version:SESSION_VERSION,game:old.game,details:Object.fromEntries(Object.entries(old.preferences||{}).map(([id,preference])=>[id,{preference}])),currentId:old.current,queueIds:old.queue||[],phase:old.phase||'waiting',scene:'cafe',selected:old.selected||[],cooking:null,prepared:old.prepared||null,served:old.served||0,lastRating:null,lastReward:0,pendingMove:null};
+ const state={version:3,game:old.game,details:Object.fromEntries(Object.entries(old.preferences||{}).map(([id,preference])=>[id,{preference}])),currentId:old.current,queueIds:old.queue||[],phase:old.phase||'waiting',scene:'cafe',selected:old.selected||[],cooking:null,prepared:old.prepared||null,served:old.served||0,lastRating:null,lastReward:0,pendingMove:null};
  if(state.phase==='finished')state.lastRating=state.prepared?.stars||null;
  return state;
 }
