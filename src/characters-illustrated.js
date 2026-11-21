@@ -169,6 +169,10 @@ export function characterSVG(c,expression='idle'){
   const catPatch=CAT.has(species)?S('M30 71 Q37 46 65 48 Q76 58 69 80 Q50 87 31 83 Z',p.patch,'opacity=".95"')
       +S('M112 48 Q138 45 147 67 L145 81 Q130 88 114 76 Z','#A8A7B2','opacity=".93"')
       +S('M40 119 L24 113 M41 125 L23 129 M135 117 L151 111 M136 125 L156 130','none','stroke="#A88B8A" stroke-width="2.6" stroke-linecap="round"'):'';
+  const berryClip=(species==='capybara')?
+    g('strawberry-pin',S('M128 47 Q112 38 110 52 Q111 66 126 76 Q141 66 144 52 Q142 39 128 47 Z','#EF7E96','stroke="'+OUTLINE+'" stroke-width="2.6"')
+    +S('M126 46 Q119 44 117 39 Q125 39 128 43 Q134 35 141 40 Q140 45 131 47 Z','#81AA76','stroke="#638C68" stroke-width="2"')
+    +E(120,54,1.5,1.8,'#FFF6D6')+E(135,57,1.5,1.8,'#FFF6D6')):'';
   const faceArt=replaceDefs(face(exp,species,p));
   const isReaction=['love','happy','yuck'].includes(exp);
   const expressionLayer=g('reaction-features',faceArt);
@@ -177,7 +181,7 @@ export function characterSVG(c,expression='idle'){
      replaceDefs(special.rear)
     +headShape
     +S('M39 62 Q67 29 113 43','none','stroke="#FFE5C4" stroke-width="8" stroke-linecap="round" opacity=".5"')
-    +catPatch+replaceDefs(special.markings)
+    +catPatch+replaceDefs(special.markings)+berryClip
     +expressionLayer+firstTasteLayer+replaceDefs(special.extras)+dress.top);
   const cheeks=species==='ghost'?E(86,137,7,5,'#D0DFF0'):''; 
   const body=species==='ghost'?replaceDefs(special.ghostShape||''):torso;
