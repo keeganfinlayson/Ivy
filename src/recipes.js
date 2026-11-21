@@ -46,12 +46,15 @@ export function resolveFood(ingredients,method){
  const names=method==='bake'?['Wobbly Cake','Mystery Crumble','Surprise Puff','Curious Biscuit']:['Rainbow Goo','Silly Smoothie','Mystery Mousse','Wiggle Pudding'];
  return{id:'mystery-'+hash.toString(36),name:names[hash%names.length],emoji:method==='bake'?'🥧':'🍮',quality:1+hash%3,group:method==='bake'?'baked':'other'};
 }
-export function rateFood(food,preference){
+export function rateFood(food,preference,favoriteIngredients=[]){
  if(food.group==='special')return 5;
  let n=food.quality;
  if(preference==='fruit'&&food.group==='fruit')n++;
  if(preference==='baked'&&food.group==='baked')n++;
  if(preference==='fruit'&&food.group==='baked')n--;
  if(preference==='baked'&&food.group==='fruit')n--;
+ // A beloved ingredient can make an otherwise ordinary dish more appealing.
+ // This bonus is small, so cooking method and overall dish quality still matter.
+ if(Array.isArray(favoriteIngredients)&&favoriteIngredients.some(id=>food.ingredients?.includes(id)))n++;
  return Math.max(1,Math.min(5,n));
 }
