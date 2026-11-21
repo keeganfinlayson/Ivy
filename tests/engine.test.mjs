@@ -6,6 +6,8 @@ import {resolveFood,rateFood} from '../src/recipes.js';
 import {SHOP_CATALOG,eventSpecies,dateKey} from '../src/game-content.js';
 import {LINE_SPOTS,routeFor,cameraPosition,safeFurniturePosition,isInLineCorridor} from '../src/scene-layout.js';
 import {LOCATIONS} from '../src/game-core.js';
+import {characterSVG} from '../src/characters-illustrated.js';
+import {cafeBackdropSVG,cafeForegroundSVG} from '../src/cafe-illustration.js';
 
 function arrive(g){if(g.phase==='arriving'){g.planMove('waiting',STATES.WAITING);g.finishMove()}assert.equal(g.phase,'waiting')}
 function counter(g){g.toCounter();g.finishMove()}
@@ -97,4 +99,27 @@ test('Old single-screen saves reposition current guest but preserve progress',()
  old.phase='waiting';
  const copy=new Restaurant(old);
  assert.equal(copy.game.coins,218);assert.deepEqual(copy.customer.position,LOCATIONS.waiting);
+});
+
+test('Illustrated animals retain distinct faces and separately layered limbs',()=>{
+ for(const species of ['cat','capybara','dog','otter','giraffe','unicorn-cat','inspector-cat','turkey','ghost','santa-capybara']){
+  const a=characterSVG({id:'test-'+species,species,outfit:'apron',headwear:'chef'},'idle');
+  assert.ok(a.includes('class="head"')&&a.includes('class="legs"')&&a.includes('class="arms"'));
+  assert.ok(a.includes('class="chef-hat"'),species+' missing chef clothing');
+  assert.ok(!a.includes('url(url(')&&!a.includes('undefined'),species+' invalid gradients');
+ }
+});
+test('Tasting and reaction faces have independent illustrated layers',()=>{
+ for(const mood of ['love','happy','yuck']){
+  const a=characterSVG({id:'reaction',species:'capybara',outfit:'none',headwear:'none'},mood);
+  assert.ok(a.includes('class="reaction-features"'));
+  assert.ok(a.includes('class="tasting-features"'));
+ }
+});
+test('Background and counter are separate scrolling scene layers',()=>{
+ const a=cafeBackdropSVG(),b=cafeForegroundSVG();
+ assert.ok(a.includes('illustrated-window'));
+ assert.ok(a.includes('wall-fill')&&a.includes('mm-floor'));
+ assert.ok(b.includes('mm-counter'));
+ assert.ok(a.includes('viewBox="0 0 1660 500"')&&b.includes('viewBox="0 0 1660 500"'));
 });
