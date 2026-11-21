@@ -4,6 +4,8 @@ import {Restaurant} from '../src/restaurant-v3.js';
 import {STATES} from '../src/game-core.js';
 import {resolveFood,rateFood} from '../src/recipes.js';
 import {SHOP_CATALOG,eventSpecies,dateKey} from '../src/game-content.js';
+import {LINE_SPOTS,routeFor,cameraPosition,safeFurniturePosition,isInLineCorridor} from '../src/scene-layout.js';
+import {LOCATIONS} from '../src/game-core.js';
 
 function arrive(g){if(g.phase==='arriving'){g.planMove('waiting',STATES.WAITING);g.finishMove()}assert.equal(g.phase,'waiting')}
 function counter(g){g.toCounter();g.finishMove()}
@@ -57,4 +59,42 @@ test('decorations and complete sessions restore',()=>{
 test('interrupted movement and version-2 saves restore',()=>{
  const g=new Restaurant();g.planMove('waiting',STATES.WAITING);const h=new Restaurant(g.serialize());assert.equal(h.phase,'waiting');
  const old=h.serialize();old.version=2;delete old.wallpaper;const later=new Restaurant(old);assert.equal(later.phase,'waiting');
+});
+
+test('Waiting line advances into the first position rather than restarting at the door',()=>{
+ const g=new Restaurant(null,{random:()=>.8});const nextInLine=g.queueIds[0];
+ arrive(g);counter(g);mix(g,['strawberry','milk']);g.serve();g.beginLeave();g.finishLeave();
+ assert.equal(g.currentId,nextInLine);assert.equal(g.cameFromLine,true);
+ assert.deepEqual(g.customer.position,LINE_SPOTS[0]);
+ g.planMove('waiting',STATES.WAITING);g.finishMove();
+ assert.deepEqual(g.customer.position,LOCATIONS.waiting);
+});
+test('Furniture avoids customer line, entrance walkway and bench',()=>{
+ const obstacles=[[.60,.85],[.45,.72],[.20,.69],[.24,.84],[.80,.90]];
+ for(const [x,y] of obstacles){
+  assert.equal(isInLineCorridor(x,y),true);
+  const p=safeFurniturePosition(x,y);assert.equal(isInLineCorridor(p.x,p.y),false);
+ }
+ const g=new Restaurant();g.game.coins=100;g.purchase('plush-cushion');
+ g.decorate('plush-cushion',.60,.85,'pink');
+ assert.equal(isInLineCorridor(g.game.decorations[0].x,g.game.decorations[0].y),false);
+});
+test('Customer walks around the standing line and camera remains in bounds',()=>{
+ const p=routeFor(LOCATIONS.entrance,'waiting');
+ assert.equal(p.length,3);assert.equal(p[p.length-1].x,LOCATIONS.waiting.x);
+ assert.equal(p[1].y,.69);
+ const fromQueue=routeFor(LINE_SPOTS[0],'waiting');
+ assert.equal(fromQueue.length,1);
+ const exit=routeFor(LOCATIONS.counter,'entrance');
+ assert.ok(exit[0].y<LOCATIONS.counter.y);
+ assert.equal(cameraPosition(.01,1660,900),0);
+ assert.ok(cameraPosition(.8,1660,900)>0);
+ assert.ok(cameraPosition(.99,1660,900)<=760);
+});
+test('Old single-screen saves reposition current guest but preserve progress',()=>{
+ const g=new Restaurant();g.game.coins=218;
+ const old=g.serialize();old.version=3;old.game.customers.find(c=>c.id===old.currentId).position={x:.27,y:.77};
+ old.phase='waiting';
+ const copy=new Restaurant(old);
+ assert.equal(copy.game.coins,218);assert.deepEqual(copy.customer.position,LOCATIONS.waiting);
 });
